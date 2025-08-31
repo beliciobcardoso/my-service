@@ -88,7 +88,7 @@ export default function HomeScreen() {
       ========================
 `;
 
-      await printData(currentSettings, printContent);
+      await printData(printContent, currentSettings);
 
       Alert.alert("Sucesso", "Enviado com sucesso!", [
         {

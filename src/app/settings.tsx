@@ -22,6 +22,7 @@ export default function SettingsScreen() {
   const [ipAddress, setIpAddress] = useState<string>("");
   const [port, setPort] = useState<string>("9100");
   const [printStandard, setPrintStandard] = useState<string>("ESC/POS");
+  const [timeout, setTimeout] = useState<string>("10");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isTesting, setIsTesting] = useState<boolean>(false);
 
@@ -33,6 +34,7 @@ export default function SettingsScreen() {
           setIpAddress(settings.ipAddress);
           setPort(settings.port.toString());
           setPrintStandard(settings.printStandard);
+          setTimeout(settings.timeout?.toString() || "10");
         }
       } catch (error) {
         console.error("Erro ao carregar configurações:", error);
@@ -84,6 +86,7 @@ export default function SettingsScreen() {
         ipAddress: ipAddress.trim(),
         port: parseInt(port.trim(), 10),
         printStandard: printStandard,
+        timeout: parseInt(timeout.trim(), 10),
       };
 
       await savePrinterSettings(settings);
@@ -119,10 +122,16 @@ export default function SettingsScreen() {
         ipAddress: ipAddress.trim(),
         port: parseInt(port.trim(), 10),
         printStandard: printStandard,
+        timeout: parseInt(timeout.trim(), 10),
       };
 
-      await testPrint(settings);
-      Alert.alert("Sucesso", "Teste de impressão executado com sucesso!");
+      const result = await testPrint(settings);
+      
+      if (result.success) {
+        Alert.alert("Sucesso", result.message);
+      } else {
+        Alert.alert("Erro no teste", result.message + (result.details ? '\n\nDetalhes: ' + result.details : ''));
+      }
     } catch (error: any) {
       Alert.alert(
         "Erro no teste",
@@ -219,6 +228,18 @@ export default function SettingsScreen() {
                 />
               </Picker>
             </View>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Timeout (segundos)</Text>
+            <TextInput
+              style={styles.input}
+              value={timeout}
+              onChangeText={setTimeout}
+              placeholder="10"
+              keyboardType="numeric"
+              returnKeyType="done"
+            />
           </View>
 
           <View style={styles.buttonContainer}>

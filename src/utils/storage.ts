@@ -4,6 +4,7 @@ export interface PrinterSettings {
   ipAddress: string;
   port: number;
   printStandard: string;
+  timeout: number;
 }
 
 const PRINTER_SETTINGS_KEY = '@PrinterApp:printerSettings';
@@ -22,20 +23,36 @@ export const savePrinterSettings = async (settings: PrinterSettings): Promise<vo
 
 export const getPrinterSettings = async (): Promise<PrinterSettings | null> => {
   try {
+    console.log('Carregando configurações...');
     const jsonValue = await AsyncStorage.getItem(PRINTER_SETTINGS_KEY);
     
     if (jsonValue != null) {
-      const parsed = JSON.parse(jsonValue) as PrinterSettings;
-      console.log('Configurações carregadas:', parsed);
-      return parsed;
-    } else {
-      console.log('Nenhuma configuração encontrada');
-      return null;
+      const settings = JSON.parse(jsonValue) as PrinterSettings;
+      console.log('Configurações carregadas:', settings);
+      
+      // Garantir que timeout existe para configurações antigas
+      if (!settings.timeout) {
+        settings.timeout = 10;
+      }
+      
+      return settings;
     }
+    
+    console.log('Nenhuma configuração encontrada, retornando padrão');
+    return getDefaultPrinterSettings();
   } catch (e: any) {
     console.error('Erro ao carregar configurações:', e);
-    throw e;
+    return getDefaultPrinterSettings();
   }
+};
+
+export const getDefaultPrinterSettings = (): PrinterSettings => {
+  return {
+    ipAddress: '192.168.1.100',
+    port: 9100,
+    printStandard: 'ESC/POS',
+    timeout: 10
+  };
 };
 
 export const clearPrinterSettings = async (): Promise<void> => {

@@ -1,4 +1,3 @@
-// src/app/index.tsx
 import React, { useState, useCallback } from "react";
 import {
   View,
@@ -46,7 +45,7 @@ export default function HomeScreen() {
       return;
     }
 
-    // Recarregar configurações no momento da impressão para garantir que temos os dados mais recentes
+    
     let currentSettings = printerSettings;
     if (!currentSettings) {
       console.log("Recarregando configurações da impressora...");

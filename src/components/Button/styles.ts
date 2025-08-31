@@ -1,17 +1,22 @@
-// src/components/Button/styles.ts
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   button: {
-    backgroundColor: '#67159C', // Roxo da Rocketseat!
+    height: 48,
     borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 12,
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  primaryButton: {
+    backgroundColor: '#6200EE',
+  },
+  disabledButton: {
+    backgroundColor: '#bdc3c7',
   },
 });

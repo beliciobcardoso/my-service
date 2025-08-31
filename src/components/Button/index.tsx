@@ -1,17 +1,30 @@
-// src/components/Button/index.tsx
-import React from 'react';
-import { TouchableOpacity, Text } from 'react-native'; // 1. Importações
-import { styles } from './styles'; // 2. Importa os estilos
+import React from "react";
+import { TouchableOpacity, TouchableOpacityProps, Text } from "react-native";
+import { styles } from "./styles";
 
-interface ButtonProps { // 3. Define as Props
+type ButtonProps = {
   title: string;
-  onPress: () => void;
-}
+  isLoading: boolean;
+  loadingText?: string;
+} & TouchableOpacityProps;
 
-export function Button({ title, onPress, ...rest }: ButtonProps) { // 4. Componente Button
+export function Button({
+  title,
+  isLoading,
+  loadingText,
+  ...rest
+}: ButtonProps) {
   return (
-    <TouchableOpacity style={styles.button} onPress={onPress} {...rest}>
-      <Text style={styles.buttonText}>{title}</Text>
+    <TouchableOpacity
+      disabled={isLoading}
+      style={[
+        styles.button,
+        styles.primaryButton,
+        isLoading && styles.disabledButton,
+      ]}
+      {...rest}
+    >
+      <Text style={styles.buttonText}>{isLoading ? loadingText : title}</Text>
     </TouchableOpacity>
   );
 }

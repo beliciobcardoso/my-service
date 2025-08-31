@@ -77,18 +77,20 @@ export default function HomeScreen() {
     setIsLoading(true);
 
     try {
-      const printContent = `ETIQUETA DE IDENTIFICAÇÃO
-========================
-Nome: ${name.trim()}
-Código: ${code.trim()}
-------------------------
-Data: ${new Date().toLocaleDateString()}
-Hora: ${new Date().toLocaleTimeString()}
-========================`;
+      const printContent = `
+            ENTREGADOR
+      ========================
+      Nome: ${name.trim()}
+      Código: ${code.trim()}
+      ------------------------
+      Data: ${new Date().toLocaleDateString()}
+      Hora: ${new Date().toLocaleTimeString()}
+      ========================
+`;
 
       await printData(currentSettings, printContent);
 
-      Alert.alert("Sucesso", "Etiqueta impressa com sucesso!", [
+      Alert.alert("Sucesso", "Enviado com sucesso!", [
         {
           text: "OK",
           onPress: () => {

@@ -160,26 +160,6 @@ export default function HomeScreen() {
             />
           </View>
 
-          {savedPrinters.length > 0 && (
-            <View style={stylesHome.inputContainer}>
-              <Text style={stylesHome.label}>Impressora</Text>
-              <View style={stylesHome.printerSelector}>
-                <Text style={stylesHome.printerText}>
-                  {selectedPrinter
-                    ? `${selectedPrinter.name} (${selectedPrinter.printStandard})`
-                    : printerSettings
-                    ? `${printerSettings.ipAddress}:${printerSettings.port} (${printerSettings.printStandard})`
-                    : "Nenhuma impressora selecionada"}
-                </Text>
-                <Button
-                  title="Trocar"
-                  onPress={() => router.push("./printers")}
-                  style={stylesHome.changeButton}
-                />
-              </View>
-            </View>
-          )}
-
           <View style={stylesHome.buttonContainer}>
             <Button
               title="Enviar"
@@ -191,12 +171,11 @@ export default function HomeScreen() {
         </View>
         <View style={stylesHome.footer}>
           <Text style={stylesHome.subtitle}>
-            {
-              (selectedPrinter
-                ? `Impressora Padrão: ${selectedPrinter.name}`
-                : printerSettings
-                ? `Impressora: ${printerSettings.ipAddress}:${printerSettings.port}`
-                : "Nenhuma impressora configurada")}
+            {selectedPrinter
+              ? `Impressora Padrão: ${selectedPrinter.name}`
+              : printerSettings
+              ? `Impressora: ${printerSettings.ipAddress}:${printerSettings.port}`
+              : "Nenhuma impressora configurada"}
           </Text>
         </View>
       </ScrollView>

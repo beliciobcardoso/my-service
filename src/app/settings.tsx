@@ -2,21 +2,21 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Alert,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import {
   savePrinterSettings,
   getPrinterSettings,
   PrinterSettings,
 } from "../utils/storage";
 import { testPrint } from "../utils/printer";
+import { Input } from "@/components/Input";
 
 export default function SettingsScreen() {
   const [ipAddress, setIpAddress] = useState<string>("");
@@ -25,6 +25,18 @@ export default function SettingsScreen() {
   const [timeout, setTimeout] = useState<string>("10");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isTesting, setIsTesting] = useState<boolean>(false);
+  const [showPickerModal, setShowPickerModal] = useState<boolean>(false);
+
+  const standards = [
+    { label: "ESC/POS", value: "ESC/POS" },
+    { label: "ZPL (Zebra)", value: "ZPL" },
+    { label: "EPL (Eltron)", value: "EPL" }
+  ];
+
+  const handleStandardSelect = (value: string) => {
+    setPrintStandard(value);
+    setShowPickerModal(false);
+  };
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -126,11 +138,15 @@ export default function SettingsScreen() {
       };
 
       const result = await testPrint(settings);
-      
+
       if (result.success) {
         Alert.alert("Sucesso", result.message);
       } else {
-        Alert.alert("Erro no teste", result.message + (result.details ? '\n\nDetalhes: ' + result.details : ''));
+        Alert.alert(
+          "Erro no teste",
+          result.message +
+            (result.details ? "\n\nDetalhes: " + result.details : "")
+        );
       }
     } catch (error: any) {
       Alert.alert(
@@ -175,8 +191,7 @@ export default function SettingsScreen() {
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Endereço IP da Impressora *</Text>
-            <TextInput
-              style={styles.input}
+            <Input
               placeholder="Ex: 192.168.1.100"
               value={ipAddress}
               onChangeText={setIpAddress}
@@ -190,8 +205,7 @@ export default function SettingsScreen() {
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Porta da Impressora *</Text>
-            <TextInput
-              style={styles.input}
+            <Input
               placeholder="Ex: 9100"
               value={port}
               onChangeText={setPort}
@@ -205,40 +219,63 @@ export default function SettingsScreen() {
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Padrão de Impressão</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={printStandard}
-                onValueChange={(itemValue) => setPrintStandard(itemValue)}
-                style={styles.picker}
-              >
-                <Picker.Item
-                  label="ESC/POS"
-                  value="ESC/POS"
-                  style={styles.pickerItem}
-                />
-                <Picker.Item
-                  label="ZPL (Zebra)"
-                  value="ZPL"
-                  style={styles.pickerItem}
-                />
-                <Picker.Item
-                  label="EPL (Eltron)"
-                  value="EPL"
-                  style={styles.pickerItem}
-                />
-              </Picker>
-            </View>
+
+            {/* Alternativa: Picker Personalizado com Modal */}
+            <TouchableOpacity
+              style={styles.customPicker}
+              onPress={() => setShowPickerModal(true)}
+            >
+              <Text style={styles.customPickerText}>
+                {standards.find(s => s.value === printStandard)?.label || "Selecione..."}
+              </Text>
+              <Text style={styles.customPickerArrow}>▼</Text>
+                </TouchableOpacity>
+
+                <Modal
+                visible={showPickerModal}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowPickerModal(false)}
+                >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                    <Text style={styles.modalTitle}>Selecione o Padrão</Text>
+                    {standards.map((standard) => (
+                        <TouchableOpacity
+                        key={standard.value}
+                        style={[
+                            styles.modalOption,
+                            printStandard === standard.value && styles.modalOptionSelected
+                        ]}
+                        onPress={() => handleStandardSelect(standard.value)}
+                        >
+                        <Text style={[
+                        styles.modalOptionText,
+                        printStandard === standard.value && styles.modalOptionTextSelected
+                      ]}>
+                        {standard.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                  <TouchableOpacity
+                    style={styles.modalCancel}
+                    onPress={() => setShowPickerModal(false)}
+                  >
+                    <Text style={styles.modalCancelText}>Cancelar</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Timeout (segundos)</Text>
-            <TextInput
-              style={styles.input}
+            <Input
               value={timeout}
               onChangeText={setTimeout}
-              placeholder="10"
-              keyboardType="numeric"
               returnKeyType="done"
+              keyboardType="numeric"
+              placeholder="10"
             />
           </View>
 
@@ -334,32 +371,80 @@ const styles = StyleSheet.create({
     color: "#2c3e50",
     marginBottom: 8,
   },
-  input: {
-    height: 48,
-    borderColor: "#e1e8ed",
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 16,
-    backgroundColor: "#ffffff",
-  },
   helpText: {
     fontSize: 12,
     color: "#7f8c8d",
     marginTop: 4,
     fontStyle: "italic",
   },
-  pickerContainer: {
+  // Estilos para picker personalizado (se necessário)
+  customPicker: {
+    height: 48,
     borderColor: "#e1e8ed",
     borderWidth: 1,
     borderRadius: 8,
     backgroundColor: "#ffffff",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
   },
-  picker: {
-    height: 48,
+  customPickerText: {
+    fontSize: 16,
+    color: "#2c3e50",
+    flex: 1,
   },
-  pickerItem: {
-    fontSize: 14,
+  customPickerArrow: {
+    fontSize: 12,
+    color: "#7f8c8d",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    padding: 20,
+    width: "80%",
+    maxWidth: 300,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#2c3e50",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  modalOption: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e1e8ed",
+  },
+  modalOptionSelected: {
+    backgroundColor: "#6200EE",
+  },
+  modalOptionText: {
+    fontSize: 16,
+    color: "#2c3e50",
+  },
+  modalOptionTextSelected: {
+    color: "#ffffff",
+    fontWeight: "bold",
+  },
+  modalCancel: {
+    marginTop: 10,
+    padding: 15,
+    backgroundColor: "#e74c3c",
+    borderRadius: 8,
+  },
+  modalCancelText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
   },
   buttonContainer: {
     marginTop: 10,

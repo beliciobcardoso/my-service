@@ -1,5 +1,5 @@
 // src/app/index.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -11,7 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { printData } from '../utils/printer';
 import { getPrinterSettings, PrinterSettings } from '../utils/storage';
 
@@ -30,9 +30,11 @@ export default function HomeScreen() {
     }
   };
 
-  useEffect(() => {
-    loadPrinterSettings();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadPrinterSettings();
+    }, [])
+  );
 
   const handleConfirmPrint = async () => {
     if (!name.trim() || !code.trim()) {
@@ -40,7 +42,19 @@ export default function HomeScreen() {
       return;
     }
 
-    if (!printerSettings) {
+    // Recarregar configurações no momento da impressão para garantir que temos os dados mais recentes
+    let currentSettings = printerSettings;
+    if (!currentSettings) {
+      console.log('Recarregando configurações da impressora...');
+      try {
+        currentSettings = await getPrinterSettings();
+        setPrinterSettings(currentSettings);
+      } catch (error) {
+        console.error('Erro ao recarregar configurações:', error);
+      }
+    }
+
+    if (!currentSettings) {
       Alert.alert(
         'Impressora não configurada',
         'Configure uma impressora antes de tentar imprimir.',
@@ -70,7 +84,7 @@ Data: ${new Date().toLocaleDateString()}
 Hora: ${new Date().toLocaleTimeString()}
 ========================`;
 
-      await printData(printerSettings, printContent);
+      await printData(currentSettings, printContent);
       
       Alert.alert('Sucesso', 'Etiqueta impressa com sucesso!', [
         {
@@ -142,7 +156,7 @@ Hora: ${new Date().toLocaleTimeString()}
               disabled={isLoading}
             >
               <Text style={styles.buttonText}>
-                {isLoading ? 'Imprimindo...' : 'Confirmar e Imprimir'}
+                {isLoading ? 'Enviando...' : 'Enviar'}
               </Text>
             </TouchableOpacity>
 

@@ -1,4 +1,6 @@
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
+import { TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function RootLayout() {
   return (
@@ -13,7 +15,20 @@ export default function RootLayout() {
         },
       }}
     >
-      <Stack.Screen name="index" options={{ title: 'Impressão de Etiquetas' }} />
+      <Stack.Screen 
+        name="index" 
+        options={{ 
+          title: 'Impressão de Etiquetas',
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => router.push('./settings')}
+              style={{ marginRight: 10 }}
+            >
+              <Ionicons name="settings-outline" size={30} color="#fff" />
+            </TouchableOpacity>
+          ),
+        }} 
+      />
       <Stack.Screen name="settings" options={{ title: 'Configurações da Impressora' }} />
     </Stack>
   );

@@ -145,7 +145,6 @@ Hora: ${new Date().toLocaleTimeString()}
               loadingText="Enviando..."
               onPress={handleConfirmPrint}
             />
-            <Button title="Configurações" onPress={navigateToSettings} />
           </View>
         </View>
         <View style={stylesHome.footer}>

@@ -4,7 +4,7 @@ import { styles } from "./styles";
 
 type ButtonProps = {
   title: string;
-  isLoading: boolean;
+  isLoading?: boolean;
   loadingText?: string;
 } & TouchableOpacityProps;
 

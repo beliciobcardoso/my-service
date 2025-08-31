@@ -1,10 +1,5 @@
-// utils/printer.ts
-import { PrinterSettings, getDefaultPrinterSettings, updateLastUsed, SavedPrinter } from './storage';
+import { PrinterSettings, updateLastUsed } from './storage';
 import TcpSocket from 'react-native-tcp-socket';
-
-// Função para simular a impressão já que a biblioteca real pode não funcionar no Expo Go
-// Em um ambiente de produção, você usaria uma biblioteca como react-native-esc-pos-printer
-// ou react-native-tcp-socket para comunicação direta com impressoras em rede
 
 // Função para converter texto para Latin1 (ISO-8859-1) compatível com impressoras
 const convertToLatin1 = (text: string): string => {
@@ -84,7 +79,7 @@ const generatePrintCommands = (settings: PrinterSettings, content: string): stri
 
 export const printData = async (
   content: string,
-  settings: PrinterSettings = getDefaultPrinterSettings(),
+  settings: PrinterSettings,
   printerId?: string
 ): Promise<{ success: boolean; message: string; details?: string }> => {
   return new Promise(async (resolve) => {

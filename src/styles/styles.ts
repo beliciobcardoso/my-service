@@ -24,15 +24,9 @@ export const stylesHome = StyleSheet.create({
     flexGrow: 1,
     padding: 20,
   },
-  header: {
+  footer: {
     alignItems: "center",
-    marginBottom: 30,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#2c3e50",
-    marginBottom: 8,
+    marginTop: 30,
   },
   subtitle: {
     fontSize: 14,

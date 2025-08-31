@@ -8,11 +8,11 @@ import {
   Platform,
 } from "react-native";
 import { router, useFocusEffect } from "expo-router";
-import { printData } from "../utils/printer";
-import { getPrinterSettings, PrinterSettings } from "../utils/storage";
-import { Button } from "../components/Button";
-import { Input } from "../components/Input";
-import { stylesHome } from "@/src/styles/styles";
+import { printData } from "@/utils/printer";
+import { getPrinterSettings, PrinterSettings } from "@/utils/storage";
+import { Button } from "@/components/Button";
+import { Input } from "@/components/Input";
+import { stylesHome } from "@/styles/styles";
 
 export default function HomeScreen() {
   const [name, setName] = useState<string>("");
@@ -45,7 +45,6 @@ export default function HomeScreen() {
       return;
     }
 
-    
     let currentSettings = printerSettings;
     if (!currentSettings) {
       console.log("Recarregando configurações da impressora...");
@@ -118,15 +117,6 @@ Hora: ${new Date().toLocaleTimeString()}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView contentContainerStyle={stylesHome.scrollContent}>
-        <View style={stylesHome.header}>
-          <Text style={stylesHome.title}>Impressão de Etiquetas</Text>
-          <Text style={stylesHome.subtitle}>
-            {printerSettings
-              ? `Impressora: ${printerSettings.ipAddress}:${printerSettings.port}`
-              : "Nenhuma impressora configurada"}
-          </Text>
-        </View>
-
         <View style={stylesHome.formContainer}>
           <View style={stylesHome.inputContainer}>
             <Text style={stylesHome.label}>Nome *</Text>
@@ -157,7 +147,13 @@ Hora: ${new Date().toLocaleTimeString()}
             />
             <Button title="Configurações" onPress={navigateToSettings} />
           </View>
-
+        </View>
+        <View style={stylesHome.footer}>
+          <Text style={stylesHome.subtitle}>
+            {printerSettings
+              ? `Impressora: ${printerSettings.ipAddress}:${printerSettings.port}`
+              : "Nenhuma impressora configurada"}
+          </Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

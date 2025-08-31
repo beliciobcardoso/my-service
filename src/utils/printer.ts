@@ -6,26 +6,27 @@ import TcpSocket from 'react-native-tcp-socket';
 // Em um ambiente de produção, você usaria uma biblioteca como react-native-esc-pos-printer
 // ou react-native-tcp-socket para comunicação direta com impressoras em rede
 
-// Função para normalizar texto para impressão ESC/POS
-const normalizeTextForPrinting = (text: string): string => {
-  // Mapeamento de caracteres acentuados para compatibilidade com CP860
-  const charMap: { [key: string]: string } = {
-    'á': 'a', 'à': 'a', 'ã': 'a', 'â': 'a', 'ä': 'a',
-    'é': 'e', 'è': 'e', 'ê': 'e', 'ë': 'e',
-    'í': 'i', 'ì': 'i', 'î': 'i', 'ï': 'i',
-    'ó': 'o', 'ò': 'o', 'õ': 'o', 'ô': 'o', 'ö': 'o',
-    'ú': 'u', 'ù': 'u', 'û': 'u', 'ü': 'u',
-    'ç': 'c',
-    'Á': 'A', 'À': 'A', 'Ã': 'A', 'Â': 'A', 'Ä': 'A',
-    'É': 'E', 'È': 'E', 'Ê': 'E', 'Ë': 'E',
-    'Í': 'I', 'Ì': 'I', 'Î': 'I', 'Ï': 'I',
-    'Ó': 'O', 'Ò': 'O', 'Õ': 'O', 'Ô': 'O', 'Ö': 'O',
-    'Ú': 'U', 'Ù': 'U', 'Û': 'U', 'Ü': 'U',
-    'Ç': 'C'
+// Função para converter texto para Latin1 (ISO-8859-1) compatível com impressoras
+const convertToLatin1 = (text: string): string => {
+  // Simples conversão mantendo caracteres acentuados compatíveis
+  const latin1Map: { [key: string]: string } = {
+    // Usar caracteres que funcionam na maioria das impressoras ESC/POS
+    'á': 'á', 'à': 'à', 'ã': 'ã', 'â': 'â', 'ä': 'ä',
+    'é': 'é', 'è': 'è', 'ê': 'ê', 'ë': 'ë',
+    'í': 'í', 'ì': 'ì', 'î': 'î', 'ï': 'ï',
+    'ó': 'ó', 'ò': 'ò', 'õ': 'õ', 'ô': 'ô', 'ö': 'ö',
+    'ú': 'ú', 'ù': 'ù', 'û': 'û', 'ü': 'ü',
+    'ç': 'ç',
+    'Á': 'Á', 'À': 'À', 'Ã': 'Ã', 'Â': 'Â', 'Ä': 'Ä',
+    'É': 'É', 'È': 'È', 'Ê': 'Ê', 'Ë': 'Ë',
+    'Í': 'Í', 'Ì': 'Ì', 'Î': 'Î', 'Ï': 'Ï',
+    'Ó': 'Ó', 'Ò': 'Ò', 'Õ': 'Õ', 'Ô': 'Ô', 'Ö': 'Ö',
+    'Ú': 'Ú', 'Ù': 'Ù', 'Û': 'Û', 'Ü': 'Ü',
+    'Ç': 'Ç'
   };
 
   return text.replace(/[áàãâäéèêëíìîïóòõôöúùûüçÁÀÃÂÄÉÈÊËÍÌÎÏÓÒÕÔÖÚÙÛÜÇ]/g, (match) => {
-    return charMap[match] || match;
+    return latin1Map[match] || match;
   });
 };
 
@@ -33,8 +34,8 @@ const normalizeTextForPrinting = (text: string): string => {
 const generatePrintCommands = (settings: PrinterSettings, content: string): string => {
   let commands = '';
   
-  // Normalizar o conteúdo para evitar problemas de codificação
-  const normalizedContent = normalizeTextForPrinting(content);
+  // Converter o conteúdo para Latin1 para manter acentos corretos
+  const convertedContent = convertToLatin1(content);
   
   switch (settings.printStandard) {
     case 'ESC/POS':
@@ -42,9 +43,9 @@ const generatePrintCommands = (settings: PrinterSettings, content: string): stri
       const GS = '\x1D';
       
       commands += ESC + '@'; // Inicializar impressora
-      commands += ESC + 't' + String.fromCharCode(16); // Codepage 860 (Português)
+      commands += ESC + 't' + String.fromCharCode(2); // Codepage 850 (Latin1)
       commands += ESC + 'a' + String.fromCharCode(1); // Centralizar
-      commands += normalizedContent + '\n';
+      commands += convertedContent + '\n';
       commands += ESC + 'd' + String.fromCharCode(3); // Alimentar papel
       commands += GS + 'V' + String.fromCharCode(0); // Corte completo
       break;
@@ -54,14 +55,14 @@ const generatePrintCommands = (settings: PrinterSettings, content: string): stri
       commands += '^XA\n'; // Início do rótulo
       commands += '^CF0,30\n'; // Fonte padrão, tamanho 30
       commands += '^FO50,50\n'; // Posição do campo
-      commands += `^FD${normalizedContent}^FS\n`; // Dados do campo
+      commands += `^FD${convertedContent}^FS\n`; // Dados do campo
       commands += '^XZ\n'; // Fim do rótulo
       break;
       
     case 'EPL':
       // Comandos EPL para impressoras Eltron
       commands += 'N\n'; // Limpar buffer
-      commands += 'A50,50,0,3,1,1,N,"' + normalizedContent + '"\n'; // Texto
+      commands += 'A50,50,0,3,1,1,N,"' + convertedContent + '"\n'; // Texto
       commands += 'P1,1\n'; // Imprimir 1 cópia
       break;
       
@@ -71,9 +72,9 @@ const generatePrintCommands = (settings: PrinterSettings, content: string): stri
       const GS_DEFAULT = '\x1D';
       
       commands += ESC_DEFAULT + '@';
-      commands += ESC_DEFAULT + 't' + String.fromCharCode(16); // Codepage 860 (Português)
+      commands += ESC_DEFAULT + 't' + String.fromCharCode(2); // Codepage 850 (Latin1)
       commands += ESC_DEFAULT + 'a' + String.fromCharCode(1);
-      commands += normalizedContent + '\n';
+      commands += convertedContent + '\n';
       commands += ESC_DEFAULT + 'd' + String.fromCharCode(3);
       commands += GS_DEFAULT + 'V' + String.fromCharCode(0);
   }
@@ -116,8 +117,8 @@ export const printData = async (
             console.log('📤 Enviando dados para impressão...');
             console.log('Comandos gerados:', printCommands.length, 'bytes');
             
-            // Enviar dados para impressora
-            client.write(printCommands, 'utf8');
+            // Enviar dados para impressora com codificação latin1
+            client.write(printCommands, 'latin1');
             
             // Aguardar um pouco antes de fechar a conexão
             setTimeout(() => {
@@ -203,7 +204,8 @@ export const printData = async (
 };
 
 export const testPrint = async (settings: PrinterSettings): Promise<{ success: boolean; message: string; details?: string }> => {
-  const testContent = `TESTE DE IMPRESSÃO
+  const testContent = `
+ TESTE DE IMPRESSÃO
 ====================
 Data: ${new Date().toLocaleDateString('pt-BR')}
 Hora: ${new Date().toLocaleTimeString('pt-BR')}

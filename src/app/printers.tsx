@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -158,7 +158,7 @@ export default function PrintersScreen() {
                   </View>
                   {printer.id === defaultPrinterId && (
                     <View style={styles.defaultBadge}>
-                      <Text style={styles.defaultText}>PADRÃO</Text>
+                      <Text style={styles.defaultText}>PRINCIPAL</Text>
                     </View>
                   )}
                 </View>
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   actionsContainer: {
-    flexDirection: "row",
+    flexDirection: "column",
   },
   actionButton: {
     padding: 8,

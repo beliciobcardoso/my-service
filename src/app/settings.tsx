@@ -15,7 +15,6 @@ import {
   getPrinterSettings,
   PrinterSettings,
   savePrinterToCache,
-  SavedPrinter,
 } from "../utils/storage";
 import { testPrint } from "../utils/printer";
 import { Input } from "@/components/Input";
@@ -25,6 +24,7 @@ export default function SettingsScreen() {
   const [port, setPort] = useState<string>("9100");
   const [printStandard, setPrintStandard] = useState<string>("ESC/POS");
   const [timeout, setTimeout] = useState<string>("10");
+  const [printerName, setPrinterName] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isTesting, setIsTesting] = useState<boolean>(false);
   const [showPickerModal, setShowPickerModal] = useState<boolean>(false);
@@ -32,7 +32,7 @@ export default function SettingsScreen() {
   const standards = [
     { label: "ESC/POS", value: "ESC/POS" },
     { label: "ZPL (Zebra)", value: "ZPL" },
-    { label: "EPL (Eltron)", value: "EPL" }
+    { label: "EPL (Eltron)", value: "EPL" },
   ];
 
   const handleStandardSelect = (value: string) => {
@@ -93,6 +93,23 @@ export default function SettingsScreen() {
       return;
     }
 
+    if (!printerName.trim()) {
+      Alert.alert("Erro", "Por favor, insira um nome para a impressora.");
+      return;
+    }
+
+    if (
+      !timeout.trim() ||
+      isNaN(parseInt(timeout.trim(), 10)) ||
+      parseInt(timeout.trim(), 10) <= 0
+    ) {
+      Alert.alert(
+        "Erro",
+        "Por favor, insira um tempo limite válido (em segundos)."
+      );
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -104,25 +121,15 @@ export default function SettingsScreen() {
       };
 
       await savePrinterSettings(settings);
-      Alert.alert(
-        "Sucesso", 
-        "Configurações salvas com sucesso!",
-        [
-          {
-            text: "Salvar como Padrão",
-            onPress: async () => {
-              try {
-                const printerName = `${ipAddress}:${port}`;
-                const savedPrinter = await savePrinterToCache(settings, printerName);
-                Alert.alert("Sucesso", "Impressora salva como padrão no cache!");
-              } catch (error: any) {
-                Alert.alert("Erro", "Falha ao salvar no cache: " + error.message);
-              }
-            }
-          },
-          { text: "OK", style: "cancel" }
-        ]
-      );
+      try {
+        await savePrinterToCache(settings, printerName);
+      } catch (error: any) {
+        Alert.alert("Erro", "Falha ao salvar no cache: " + error.message);
+      }
+
+      Alert.alert("Sucesso", "Configurações salvas com sucesso!", [
+        { text: "OK", style: "cancel" },
+      ]);
     } catch (error: any) {
       Alert.alert("Erro", "Falha ao salvar configurações: " + error.message);
     } finally {
@@ -192,8 +199,9 @@ export default function SettingsScreen() {
           style: "destructive",
           onPress: () => {
             setIpAddress("");
-            setPort("9100");
+            setPort("");
             setPrintStandard("ESC/POS");
+            setTimeout("");
           },
         },
       ]
@@ -207,7 +215,15 @@ export default function SettingsScreen() {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.formContainer}>
-          <Text style={styles.sectionTitle}>Configurações da Impressora</Text>
+          <View style={styles.inputContainer}>
+            <Text  style={styles.label}>Local da Impressora *</Text>
+            <Input
+              placeholder="Ex: Cozinha"
+              value={printerName}
+              onChangeText={setPrinterName}
+              maxLength={25}
+            />
+          </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Endereço IP da Impressora *</Text>
@@ -246,33 +262,38 @@ export default function SettingsScreen() {
               onPress={() => setShowPickerModal(true)}
             >
               <Text style={styles.customPickerText}>
-                {standards.find(s => s.value === printStandard)?.label || "Selecione..."}
+                {standards.find((s) => s.value === printStandard)?.label ||
+                  "Selecione..."}
               </Text>
               <Text style={styles.customPickerArrow}>▼</Text>
-                </TouchableOpacity>
+            </TouchableOpacity>
 
-                <Modal
-                visible={showPickerModal}
-                transparent={true}
-                animationType="slide"
-                onRequestClose={() => setShowPickerModal(false)}
-                >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                    <Text style={styles.modalTitle}>Selecione o Padrão</Text>
-                    {standards.map((standard) => (
-                        <TouchableOpacity
-                        key={standard.value}
+            <Modal
+              visible={showPickerModal}
+              transparent={true}
+              animationType="slide"
+              onRequestClose={() => setShowPickerModal(false)}
+            >
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalTitle}>Selecione o Padrão</Text>
+                  {standards.map((standard) => (
+                    <TouchableOpacity
+                      key={standard.value}
+                      style={[
+                        styles.modalOption,
+                        printStandard === standard.value &&
+                          styles.modalOptionSelected,
+                      ]}
+                      onPress={() => handleStandardSelect(standard.value)}
+                    >
+                      <Text
                         style={[
-                            styles.modalOption,
-                            printStandard === standard.value && styles.modalOptionSelected
+                          styles.modalOptionText,
+                          printStandard === standard.value &&
+                            styles.modalOptionTextSelected,
                         ]}
-                        onPress={() => handleStandardSelect(standard.value)}
-                        >
-                        <Text style={[
-                        styles.modalOptionText,
-                        printStandard === standard.value && styles.modalOptionTextSelected
-                      ]}>
+                      >
                         {standard.label}
                       </Text>
                     </TouchableOpacity>
@@ -338,7 +359,6 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           </View>
         </View>
-
         <View style={styles.infoContainer}>
           <Text style={styles.infoTitle}>Instruções</Text>
           <Text style={styles.infoText}>
@@ -362,7 +382,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingTop: 10,
   },
   formContainer: {
     backgroundColor: "#ffffff",
@@ -508,7 +530,8 @@ const styles = StyleSheet.create({
   infoContainer: {
     backgroundColor: "#ecf0f1",
     borderRadius: 8,
-    padding: 16,
+    padding: 8,
+    marginBottom: 10,
   },
   infoTitle: {
     fontSize: 16,

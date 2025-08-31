@@ -9,12 +9,12 @@ import {
 } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { printData } from "@/utils/printer";
-import { 
-  getPrinterSettings, 
-  PrinterSettings, 
+import {
+  getPrinterSettings,
+  PrinterSettings,
   getSavedPrinters,
   getDefaultPrinter,
-  SavedPrinter
+  SavedPrinter,
 } from "@/utils/storage";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
@@ -26,7 +26,9 @@ export default function HomeScreen() {
   const [printerSettings, setPrinterSettings] =
     useState<PrinterSettings | null>(null);
   const [savedPrinters, setSavedPrinters] = useState<SavedPrinter[]>([]);
-  const [selectedPrinter, setSelectedPrinter] = useState<SavedPrinter | null>(null);
+  const [selectedPrinter, setSelectedPrinter] = useState<SavedPrinter | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const loadPrinterSettings = async () => {
@@ -34,11 +36,11 @@ export default function HomeScreen() {
       // Carregar configurações atuais
       const settings = await getPrinterSettings();
       setPrinterSettings(settings);
-      
+
       // Carregar impressoras salvas
       const cached = await getSavedPrinters();
       setSavedPrinters(cached);
-      
+
       // Definir impressora padrão se existir
       const defaultPrinter = await getDefaultPrinter();
       setSelectedPrinter(defaultPrinter);
@@ -163,12 +165,11 @@ export default function HomeScreen() {
               <Text style={stylesHome.label}>Impressora</Text>
               <View style={stylesHome.printerSelector}>
                 <Text style={stylesHome.printerText}>
-                  {selectedPrinter 
+                  {selectedPrinter
                     ? `${selectedPrinter.name} (${selectedPrinter.printStandard})`
                     : printerSettings
                     ? `${printerSettings.ipAddress}:${printerSettings.port} (${printerSettings.printStandard})`
-                    : "Nenhuma impressora selecionada"
-                  }
+                    : "Nenhuma impressora selecionada"}
                 </Text>
                 <Button
                   title="Trocar"
@@ -190,11 +191,12 @@ export default function HomeScreen() {
         </View>
         <View style={stylesHome.footer}>
           <Text style={stylesHome.subtitle}>
-            {selectedPrinter
-              ? `Impressora Padrão: ${selectedPrinter.name}`
-              : printerSettings
-              ? `Impressora: ${printerSettings.ipAddress}:${printerSettings.port}`
-              : "Nenhuma impressora configurada"}
+            {
+              (selectedPrinter
+                ? `Impressora Padrão: ${selectedPrinter.name}`
+                : printerSettings
+                ? `Impressora: ${printerSettings.ipAddress}:${printerSettings.port}`
+                : "Nenhuma impressora configurada")}
           </Text>
         </View>
       </ScrollView>

@@ -9,7 +9,13 @@ import {
 } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { printData } from "@/utils/printer";
-import { getPrinterSettings, PrinterSettings } from "@/utils/storage";
+import { 
+  getPrinterSettings, 
+  PrinterSettings, 
+  getSavedPrinters,
+  getDefaultPrinter,
+  SavedPrinter
+} from "@/utils/storage";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { stylesHome } from "@/styles/styles";
@@ -19,12 +25,23 @@ export default function HomeScreen() {
   const [code, setCode] = useState<string>("");
   const [printerSettings, setPrinterSettings] =
     useState<PrinterSettings | null>(null);
+  const [savedPrinters, setSavedPrinters] = useState<SavedPrinter[]>([]);
+  const [selectedPrinter, setSelectedPrinter] = useState<SavedPrinter | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const loadPrinterSettings = async () => {
     try {
+      // Carregar configurações atuais
       const settings = await getPrinterSettings();
       setPrinterSettings(settings);
+      
+      // Carregar impressoras salvas
+      const cached = await getSavedPrinters();
+      setSavedPrinters(cached);
+      
+      // Definir impressora padrão se existir
+      const defaultPrinter = await getDefaultPrinter();
+      setSelectedPrinter(defaultPrinter);
     } catch (error) {
       console.error("Erro ao carregar configurações:", error);
     }
@@ -45,7 +62,8 @@ export default function HomeScreen() {
       return;
     }
 
-    let currentSettings = printerSettings;
+    // Verificar se existe impressora selecionada ou configuração atual
+    let currentSettings = selectedPrinter || printerSettings;
     if (!currentSettings) {
       console.log("Recarregando configurações da impressora...");
       try {
@@ -78,7 +96,7 @@ export default function HomeScreen() {
 
     try {
       const printContent = `
-            ENTREGADOR
+      ENTREGADOR
       ========================
       Nome: ${name.trim()}
       Código: ${code.trim()}
@@ -140,6 +158,27 @@ export default function HomeScreen() {
             />
           </View>
 
+          {savedPrinters.length > 0 && (
+            <View style={stylesHome.inputContainer}>
+              <Text style={stylesHome.label}>Impressora</Text>
+              <View style={stylesHome.printerSelector}>
+                <Text style={stylesHome.printerText}>
+                  {selectedPrinter 
+                    ? `${selectedPrinter.name} (${selectedPrinter.printStandard})`
+                    : printerSettings
+                    ? `${printerSettings.ipAddress}:${printerSettings.port} (${printerSettings.printStandard})`
+                    : "Nenhuma impressora selecionada"
+                  }
+                </Text>
+                <Button
+                  title="Trocar"
+                  onPress={() => router.push("./printers")}
+                  style={stylesHome.changeButton}
+                />
+              </View>
+            </View>
+          )}
+
           <View style={stylesHome.buttonContainer}>
             <Button
               title="Enviar"
@@ -151,7 +190,9 @@ export default function HomeScreen() {
         </View>
         <View style={stylesHome.footer}>
           <Text style={stylesHome.subtitle}>
-            {printerSettings
+            {selectedPrinter
+              ? `Impressora Padrão: ${selectedPrinter.name}`
+              : printerSettings
               ? `Impressora: ${printerSettings.ipAddress}:${printerSettings.port}`
               : "Nenhuma impressora configurada"}
           </Text>

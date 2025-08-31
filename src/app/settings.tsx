@@ -14,6 +14,8 @@ import {
   savePrinterSettings,
   getPrinterSettings,
   PrinterSettings,
+  savePrinterToCache,
+  SavedPrinter,
 } from "../utils/storage";
 import { testPrint } from "../utils/printer";
 import { Input } from "@/components/Input";
@@ -102,7 +104,25 @@ export default function SettingsScreen() {
       };
 
       await savePrinterSettings(settings);
-      Alert.alert("Sucesso", "Configurações salvas com sucesso!");
+      Alert.alert(
+        "Sucesso", 
+        "Configurações salvas com sucesso!",
+        [
+          {
+            text: "Salvar como Padrão",
+            onPress: async () => {
+              try {
+                const printerName = `${ipAddress}:${port}`;
+                const savedPrinter = await savePrinterToCache(settings, printerName);
+                Alert.alert("Sucesso", "Impressora salva como padrão no cache!");
+              } catch (error: any) {
+                Alert.alert("Erro", "Falha ao salvar no cache: " + error.message);
+              }
+            }
+          },
+          { text: "OK", style: "cancel" }
+        ]
+      );
     } catch (error: any) {
       Alert.alert("Erro", "Falha ao salvar configurações: " + error.message);
     } finally {

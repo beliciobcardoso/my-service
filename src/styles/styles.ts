@@ -55,4 +55,27 @@ export const stylesHome = StyleSheet.create({
   buttonContainer: {
     marginTop: 10,
   },
+  printerSelector: {
+    backgroundColor: "#f8f9fa",
+    borderRadius: 8,
+    padding: 15,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#e9ecef",
+  },
+  printerText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#495057",
+    marginRight: 10,
+  },
+  changeButton: {
+    backgroundColor: "#007bff",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    minWidth: 60,
+  },
 });

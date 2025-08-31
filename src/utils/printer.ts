@@ -1,5 +1,5 @@
 // utils/printer.ts
-import { PrinterSettings, getDefaultPrinterSettings } from './storage';
+import { PrinterSettings, getDefaultPrinterSettings, updateLastUsed, SavedPrinter } from './storage';
 import TcpSocket from 'react-native-tcp-socket';
 
 // Função para simular a impressão já que a biblioteca real pode não funcionar no Expo Go
@@ -84,14 +84,20 @@ const generatePrintCommands = (settings: PrinterSettings, content: string): stri
 
 export const printData = async (
   content: string,
-  settings: PrinterSettings = getDefaultPrinterSettings()
+  settings: PrinterSettings = getDefaultPrinterSettings(),
+  printerId?: string
 ): Promise<{ success: boolean; message: string; details?: string }> => {
-  return new Promise((resolve) => {
+  return new Promise(async (resolve) => {
     try {
       console.log('=== INICIANDO CONEXÃO COM IMPRESSORA ===');
       console.log('IP:', settings.ipAddress);
       console.log('Porta:', settings.port);
       console.log('Padrão:', settings.printStandard);
+      
+      // Atualizar último uso se printerId for fornecido
+      if (printerId) {
+        updateLastUsed(printerId).catch(e => console.warn('Erro ao atualizar último uso:', e));
+      }
       
       // Timeout para toda a operação
       const operationTimeout = setTimeout(() => {

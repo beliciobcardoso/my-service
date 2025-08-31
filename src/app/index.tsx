@@ -3,9 +3,6 @@ import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
   Alert,
   ScrollView,
   KeyboardAvoidingView,
@@ -16,6 +13,7 @@ import { printData } from "../utils/printer";
 import { getPrinterSettings, PrinterSettings } from "../utils/storage";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
+import { stylesHome } from "@/src/styles/styles";
 
 export default function HomeScreen() {
   const [name, setName] = useState<string>("");
@@ -117,22 +115,22 @@ Hora: ${new Date().toLocaleTimeString()}
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={stylesHome.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Impressão de Etiquetas</Text>
-          <Text style={styles.subtitle}>
+      <ScrollView contentContainerStyle={stylesHome.scrollContent}>
+        <View style={stylesHome.header}>
+          <Text style={stylesHome.title}>Impressão de Etiquetas</Text>
+          <Text style={stylesHome.subtitle}>
             {printerSettings
               ? `Impressora: ${printerSettings.ipAddress}:${printerSettings.port}`
               : "Nenhuma impressora configurada"}
           </Text>
         </View>
 
-        <View style={styles.formContainer}>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Nome *</Text>
+        <View style={stylesHome.formContainer}>
+          <View style={stylesHome.inputContainer}>
+            <Text style={stylesHome.label}>Nome *</Text>
             <Input
               placeholder="Digite o nome"
               value={name}
@@ -141,8 +139,8 @@ Hora: ${new Date().toLocaleTimeString()}
             />
           </View>
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Código *</Text>
+          <View style={stylesHome.inputContainer}>
+            <Text style={stylesHome.label}>Código *</Text>
             <Input
               placeholder="Digite o código"
               value={code}
@@ -151,7 +149,7 @@ Hora: ${new Date().toLocaleTimeString()}
             />
           </View>
 
-          <View style={styles.buttonContainer}>
+          <View style={stylesHome.buttonContainer}>
             <Button
               title="Enviar"
               isLoading={isLoading}
@@ -160,57 +158,9 @@ Hora: ${new Date().toLocaleTimeString()}
             />
             <Button title="Configurações" onPress={navigateToSettings} />
           </View>
-          
+
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f5f7fa",
-  },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 20,
-  },
-  header: {
-    alignItems: "center",
-    marginBottom: 30,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#2c3e50",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#7f8c8d",
-    textAlign: "center",
-  },
-  formContainer: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 20,
-    elevation: 5,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#2c3e50",
-    marginBottom: 8,
-  },
-  buttonContainer: {
-    marginTop: 10,
-  },
-});

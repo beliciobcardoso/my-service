@@ -49,21 +49,12 @@ export const getPrinterSettings = async (): Promise<PrinterSettings | null> => {
             return settings;
         }
 
-        console.log('Nenhuma configuração encontrada, retornando padrão');
-        return getDefaultPrinterSettings();
+        console.log('Nenhuma configuração encontrada');
+        return null;
     } catch (e: any) {
         console.error('Erro ao carregar configurações:', e);
-        return getDefaultPrinterSettings();
+        return null;
     }
-};
-
-export const getDefaultPrinterSettings = (): PrinterSettings => {
-    return {
-        ipAddress: '192.168.1.100',
-        port: 9100,
-        printStandard: 'ESC/POS',
-        timeout: 10
-    };
 };
 
 export const clearPrinterSettings = async (): Promise<void> => {

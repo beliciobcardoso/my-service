@@ -15,6 +15,7 @@ import { router, useFocusEffect } from "expo-router";
 import { printData } from "../utils/printer";
 import { getPrinterSettings, PrinterSettings } from "../utils/storage";
 import { Button } from "../components/Button";
+import { Input } from "../components/Input";
 
 export default function HomeScreen() {
   const [name, setName] = useState<string>("");
@@ -132,8 +133,7 @@ Hora: ${new Date().toLocaleTimeString()}
         <View style={styles.formContainer}>
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Nome *</Text>
-            <TextInput
-              style={styles.input}
+            <Input
               placeholder="Digite o nome"
               value={name}
               onChangeText={setName}
@@ -143,8 +143,7 @@ Hora: ${new Date().toLocaleTimeString()}
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Código *</Text>
-            <TextInput
-              style={styles.input}
+            <Input
               placeholder="Digite o código"
               value={code}
               onChangeText={setCode}
@@ -159,13 +158,9 @@ Hora: ${new Date().toLocaleTimeString()}
               loadingText="Enviando..."
               onPress={handleConfirmPrint}
             />
-            <TouchableOpacity
-              style={[styles.button, styles.secondaryButton]}
-              onPress={navigateToSettings}
-            >
-              <Text style={styles.secondaryButtonText}>Configurações</Text>
-            </TouchableOpacity>
+            <Button title="Configurações" onPress={navigateToSettings} />
           </View>
+          
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -215,44 +210,7 @@ const styles = StyleSheet.create({
     color: "#2c3e50",
     marginBottom: 8,
   },
-  input: {
-    height: 48,
-    borderColor: "#e1e8ed",
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 16,
-    backgroundColor: "#ffffff",
-  },
   buttonContainer: {
     marginTop: 10,
-  },
-  button: {
-    height: 48,
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  primaryButton: {
-    backgroundColor: "#6200EE",
-  },
-  secondaryButton: {
-    backgroundColor: "transparent",
-    borderWidth: 2,
-    borderColor: "#6200EE",
-  },
-  disabledButton: {
-    backgroundColor: "#bdc3c7",
-  },
-  buttonText: {
-    color: "#ffffff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  secondaryButtonText: {
-    color: "#6200EE",
-    fontSize: 16,
-    fontWeight: "600",
   },
 });

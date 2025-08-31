@@ -1,16 +1,16 @@
-// src/components/Input/styles.ts
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   input: {
-    width: '100%',
-    height: 52,
-    backgroundColor: '#121214', // Cor de fundo escura
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 16,
+    height: 48,
+    borderColor: "#e1e8ed",
     borderWidth: 1,
-    margin: 20,
-    color: '#FFFFFF',       // Cor do texto digitado
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 16,
+    backgroundColor: "#ffffff",
+  },
+  placeholderTextColor: {
+    color: "#999999",
   },
 });

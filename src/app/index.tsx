@@ -108,9 +108,11 @@ export default function HomeScreen() {
       ========================
 `;
 
-      await printData(printContent, currentSettings);
+      const result = await printData(printContent, currentSettings);
 
-      Alert.alert("Sucesso", "Enviado com sucesso!", [
+      console.log("Resultado da impressão:", result);
+
+      Alert.alert(result.success ? "Sucesso" : `Erro: ${result.message}`, result.details,  [
         {
           text: "OK",
           onPress: () => {
@@ -118,11 +120,17 @@ export default function HomeScreen() {
             setCode("");
           },
         },
-      ]);
+      ],
+    {
+      onDismiss: () => {
+        setName("");
+        setCode("");
+      },
+    });
     } catch (error: any) {
       Alert.alert(
         "Erro na impressão",
-        error.message || "Falha ao imprimir a etiqueta."
+        error.message || "Falha ao imprimir."
       );
     } finally {
       setIsLoading(false);

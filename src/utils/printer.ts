@@ -1,7 +1,185 @@
 import { PrinterSettings, updateLastUsed } from './storage';
 import TcpSocket from 'react-native-tcp-socket';
 
-// Função para converter texto para Latin1 (ISO-8859-1) compatível com impressoras
+// Tipo para resultado de impressão
+type PrintResult = { success: boolean; message: string; details?: string };
+
+// Sistema de logs configurável
+const DEBUG = __DEV__; // Ativo apenas em desenvolvimento
+const log = (message: string, ...args: any[]) => {
+  if (DEBUG) console.log(message, ...args);
+};
+const logError = (message: string, ...args: any[]) => {
+  if (DEBUG) console.error(message, ...args);
+};
+
+// Função auxiliar para resolver promise apenas uma vez
+const createResolver = (resolve: (result: PrintResult) => void) => {
+  let resolved = false;
+  return (result: PrintResult) => {
+    if (resolved) return;
+    resolved = true;
+    log('🎯 Resultado final:', result.message);
+    resolve(result);
+  };
+};
+
+// Criar cliente TCP com configurações básicas
+const createTcpClient = (settings: PrinterSettings) => {
+  log('🔌 Criando conexão TCP...');
+  const client = TcpSocket.createConnection({
+    port: settings.port,
+    host: settings.ipAddress
+  }, () => {
+    // Callback não utilizado - lógica movida para event handlers
+  });
+
+  client.setTimeout(3000); // 3 segundos para timeout de conexão
+  log('⏰ Timeout de conexão configurado: 3 segundos');
+
+  return client;
+};
+
+// Centralizar tratamento de erros de conexão
+const handleConnectionError = (error: any, settings: PrinterSettings): PrintResult => {
+  logError('❌ Erro de conexão capturado:', error);
+
+  const errorStr = error?.message || error?.toString() || 'Erro desconhecido';
+  log('🔍 Tipo de erro:', errorStr);
+
+  // Timeout específico
+  if (errorStr.includes('ETIMEDOUT') || errorStr.includes('timeout')) {
+    return {
+      success: false,
+      message: 'Impressora não responde (timeout)',
+      details: `A impressora em ${settings.ipAddress}:${settings.port} demorou muito para responder. Verifique se está ligada.`
+    };
+  }
+
+  // Problema de rede
+  if (errorStr.includes('ENETUNREACH') || errorStr.includes('Network unreachable')) {
+    return {
+      success: false,
+      message: 'Problema de rede',
+      details: 'Não foi possível acessar a rede. Verifique sua conexão Wi-Fi.'
+    };
+  }
+
+  // Qualquer outro erro = impressora desligada
+  return {
+    success: false,
+    message: 'Impressora desligada',
+    details: `A impressora em ${settings.ipAddress}:${settings.port} não está respondendo. Verifique se está ligada e conectada à rede.`
+  };
+};
+
+// Configurar todos os event handlers do cliente
+const setupEventHandlers = (
+  client: any,
+  settings: PrinterSettings,
+  resolveOnce: (result: PrintResult) => void,
+  operationTimeout: ReturnType<typeof setTimeout>,
+  onConnect: () => void
+) => {
+  // Handler de erro (sempre primeiro)
+  client.on('error', (error: any) => {
+    client.destroy();
+    clearTimeout(operationTimeout);
+    const result = handleConnectionError(error, settings);
+    resolveOnce(result);
+  });
+
+  // Handler de timeout
+  client.on('timeout', () => {
+    log('⏰ Timeout de conexão');
+    client.destroy();
+    clearTimeout(operationTimeout);
+    resolveOnce({
+      success: false,
+      message: 'Impressora não responde',
+      details: 'Timeout de conexão'
+    });
+  });
+
+  // Handler de conexão bem-sucedida
+  client.on('connect', () => {
+    log('✅ Conectado à impressora com sucesso!');
+    onConnect();
+  });
+
+  // Handler de fechamento
+  client.on('close', () => {
+    log('🔌 Conexão fechada');
+  });
+};
+
+// Enviar comandos de impressão para a impressora
+const sendPrintCommands = async (
+  client: any,
+  commands: string,
+  settings: PrinterSettings,
+  resolveOnce: (result: PrintResult) => void,
+  operationTimeout: ReturnType<typeof setTimeout>
+) => {
+  try {
+    log('📤 Enviando dados para impressão...');
+    log('Comandos gerados:', commands.length, 'bytes');
+
+    const writeResult = client.write(commands, 'latin1', (error: any) => {
+      if (error) {
+        logError('❌ Erro ao enviar dados:', error);
+        client.destroy();
+        clearTimeout(operationTimeout);
+        resolveOnce({
+          success: false,
+          message: 'Erro ao enviar dados para impressora',
+          details: error.message || 'Falha na transmissão'
+        });
+        return;
+      }
+
+      log('✅ Dados enviados com sucesso');
+
+      // Aguardar um pouco antes de confirmar sucesso
+      setTimeout(() => {
+        client.destroy();
+        clearTimeout(operationTimeout);
+        resolveOnce({
+          success: true,
+          message: 'Dados enviados com sucesso!',
+          details: 'Impressão enviada com sucesso'
+        });
+      }, 1000); // Reduzido para 1 segundo
+    });
+
+    // Verificar se write foi bem-sucedido
+    if (!writeResult) {
+      client.destroy();
+      clearTimeout(operationTimeout);
+      resolveOnce({
+        success: false,
+        message: 'Falha ao enviar dados',
+        details: 'A impressora não conseguiu receber os dados'
+      });
+    }
+
+  } catch (error) {
+    logError('❌ Erro ao processar dados:', error);
+    client.destroy();
+    clearTimeout(operationTimeout);
+    resolveOnce({
+      success: false,
+      message: 'Erro ao processar dados de impressão',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+};
+
+/**
+ * Converte texto para codificação Latin1 compatível com impressoras
+ * @param text Texto a ser convertido
+ * @returns Texto convertido para Latin1
+ */
 const convertToLatin1 = (text: string): string => {
   // Simples conversão mantendo caracteres acentuados compatíveis
   const latin1Map: { [key: string]: string } = {
@@ -25,7 +203,12 @@ const convertToLatin1 = (text: string): string => {
   });
 };
 
-// Função para gerar comandos baseados no padrão de impressão
+/**
+ * Gera comandos de impressão baseados no padrão da impressora
+ * @param settings Configurações da impressora
+ * @param content Conteúdo a ser impresso
+ * @returns String com comandos de impressão
+ */
 const generatePrintCommands = (settings: PrinterSettings, content: string): string => {
   let commands = '';
   
@@ -77,125 +260,68 @@ const generatePrintCommands = (settings: PrinterSettings, content: string): stri
   return commands;
 };
 
+// Exportar funções auxiliares para testes
+export {
+  createResolver,
+  createTcpClient,
+  handleConnectionError,
+  setupEventHandlers,
+  sendPrintCommands,
+  convertToLatin1,
+  generatePrintCommands,
+  type PrintResult
+};
+
+/**
+ * Envia dados para impressão em uma impressora de rede
+ * @param content Conteúdo a ser impresso
+ * @param settings Configurações da impressora (IP, porta, padrão)
+ * @param printerId ID opcional da impressora para rastreamento de uso
+ * @returns Promise com resultado da operação de impressão
+ */
 export const printData = async (
   content: string,
   settings: PrinterSettings,
   printerId?: string
-): Promise<{ success: boolean; message: string; details?: string }> => {
-  return new Promise(async (resolve) => {
+): Promise<PrintResult> => {
+  return new Promise((resolve) => {
+    const resolveOnce = createResolver(resolve);
+
     try {
-      console.log('=== INICIANDO CONEXÃO COM IMPRESSORA ===');
-      console.log('IP:', settings.ipAddress);
-      console.log('Porta:', settings.port);
-      console.log('Padrão:', settings.printStandard);
-      
-      // Atualizar último uso se printerId for fornecido
+      // Logs iniciais
+      log('=== INICIANDO CONEXÃO COM IMPRESSORA ===');
+      log('IP:', settings.ipAddress);
+      log('Porta:', settings.port);
+      log('Padrão:', settings.printStandard);
+
+      // Atualizar último uso se printerId fornecido
       if (printerId) {
-        updateLastUsed(printerId).catch(e => console.warn('Erro ao atualizar último uso:', e));
+        updateLastUsed(printerId).catch(e => logError('Erro ao atualizar último uso:', e));
       }
-      
+
       // Timeout para toda a operação
       const operationTimeout = setTimeout(() => {
-        resolve({
+        log('⏰ Timeout geral da operação');
+        resolveOnce({
           success: false,
           message: 'Timeout na operação de impressão',
           details: `Tempo limite de ${settings.timeout}s excedido`
         });
       }, settings.timeout * 1000);
 
-      const client = TcpSocket.createConnection(
-        {
-          port: settings.port,
-          host: settings.ipAddress
-        },
-        () => {
-          console.log('✅ Conectado à impressora');
-          
-          try {
-            // Gerar comandos baseados no padrão selecionado
-            const printCommands = generatePrintCommands(settings, content);
-            
-            console.log('📤 Enviando dados para impressão...');
-            console.log('Comandos gerados:', printCommands.length, 'bytes');
-            
-            // Enviar dados para impressora com codificação latin1
-            client.write(printCommands, 'latin1');
-            
-            // Aguardar um pouco antes de fechar a conexão
-            setTimeout(() => {
-              client.destroy();
-              clearTimeout(operationTimeout);
-              
-              resolve({
-                success: true,
-                message: 'Dados enviados com sucesso!',
-                details: `Impressão realizada via ${settings.printStandard}`
-              });
-            }, 1000);
-            
-          } catch (error) {
-            console.error('❌ Erro ao enviar dados:', error);
-            client.destroy();
-            clearTimeout(operationTimeout);
-            
-            resolve({
-              success: false,
-              message: 'Erro ao processar dados de impressão',
-              details: error instanceof Error ? error.message : 'Erro desconhecido'
-            });
-          }
-        }
-      );
+      // Criar cliente TCP
+      const client = createTcpClient(settings);
 
-      client.on('error', (error) => {
-        console.info('❌ Erro de conexão:', error);
-        clearTimeout(operationTimeout);
-        
-        let errorMessage = 'Erro de conexão com a impressora';
-        let details = 'Erro desconhecido';
-        
-        // Verificar se error tem message
-        const errorStr = error?.message || error?.toString() || 'Erro desconhecido';
-        
-        if (errorStr.includes('ECONNREFUSED')) {
-          errorMessage = 'Impressora não encontrada';
-          details = `Verifique se a impressora está ligada e acessível em ${settings.ipAddress}:${settings.port}`;
-        } else if (errorStr.includes('ETIMEDOUT')) {
-          errorMessage = 'Timeout de conexão';
-          details = 'A impressora não respondeu no tempo esperado';
-        } else if (errorStr.includes('EHOSTUNREACH')) {
-          errorMessage = 'Host não alcançável';
-          details = 'Verifique a configuração de rede e IP da impressora';
-        } else {
-          details = errorStr;
-        }
-        
-        resolve({
-          success: false,
-          message: errorMessage,
-          details: details
-        });
-      });
-
-      client.on('timeout', () => {
-        console.log('⏰ Timeout de conexão');
-        client.destroy();
-        clearTimeout(operationTimeout);
-        
-        resolve({
-          success: false,
-          message: 'Timeout de conexão',
-          details: `Impressora não respondeu em ${settings.timeout}s`
-        });
-      });
-
-      client.on('close', () => {
-        console.log('🔌 Conexão fechada');
+      // Configurar event handlers
+      setupEventHandlers(client, settings, resolveOnce, operationTimeout, () => {
+        // Callback executado quando conectar com sucesso
+        const commands = generatePrintCommands(settings, content);
+        sendPrintCommands(client, commands, settings, resolveOnce, operationTimeout);
       });
 
     } catch (error) {
-      console.error('❌ Erro geral:', error);
-      resolve({
+      logError('❌ Erro geral:', error);
+      resolveOnce({
         success: false,
         message: 'Erro interno da aplicação',
         details: error instanceof Error ? error.message : 'Erro desconhecido'
@@ -204,7 +330,12 @@ export const printData = async (
   });
 };
 
-export const testPrint = async (settings: PrinterSettings): Promise<{ success: boolean; message: string; details?: string }> => {
+/**
+ * Testa a conexão com uma impressora enviando dados de teste
+ * @param settings Configurações da impressora para teste
+ * @returns Promise com resultado do teste de impressão
+ */
+export const testPrint = async (settings: PrinterSettings): Promise<PrintResult> => {
   const testContent = `
  TESTE DE IMPRESSÃO
 ====================

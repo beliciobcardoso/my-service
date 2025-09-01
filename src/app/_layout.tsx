@@ -18,7 +18,7 @@ export default function RootLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: "Impressão de Etiquetas",
+          title: "Impressão Express",
           headerRight: () => (
             <TouchableOpacity
               onPress={() => router.push("./printers")}

@@ -1,4 +1,4 @@
-import { PrinterSettings, updateLastUsed } from './storage';
+import { PrinterSettings, updateLastUsed, addPrintHistoryEntry } from './storage';
 import TcpSocket from 'react-native-tcp-socket';
 
 // Tipo para resultado de impressão
@@ -119,7 +119,11 @@ const sendPrintCommands = async (
   commands: string,
   settings: PrinterSettings,
   resolveOnce: (result: PrintResult) => void,
-  operationTimeout: ReturnType<typeof setTimeout>
+  operationTimeout: ReturnType<typeof setTimeout>,
+  printerId?: string,
+  printerName?: string,
+  labelData?: { nome: string; codigo: string },
+  startTime?: number
 ) => {
   try {
     log('📤 Enviando dados para impressão...');
@@ -130,6 +134,22 @@ const sendPrintCommands = async (
         logError('❌ Erro ao enviar dados:', error);
         client.destroy();
         clearTimeout(operationTimeout);
+        
+        // Registrar erro no histórico
+        if (labelData && startTime) {
+          addPrintHistoryEntry({
+            printerName: printerName || `Impressora ${settings.ipAddress}`,
+            printerId: printerId || 'unknown',
+            printerIp: settings.ipAddress,
+            printStandard: settings.printStandard,
+            nome: labelData.nome,
+            codigo: labelData.codigo,
+            status: 'error',
+            errorMessage: error.message || 'Falha na transmissão',
+            duration: Date.now() - startTime
+          });
+        }
+        
         resolveOnce({
           success: false,
           message: 'Erro ao enviar dados para impressora',
@@ -144,6 +164,21 @@ const sendPrintCommands = async (
       setTimeout(() => {
         client.destroy();
         clearTimeout(operationTimeout);
+        
+        // Registrar sucesso no histórico
+        if (labelData && startTime) {
+          addPrintHistoryEntry({
+            printerName: printerName || `Impressora ${settings.ipAddress}`,
+            printerId: printerId || 'unknown',
+            printerIp: settings.ipAddress,
+            printStandard: settings.printStandard,
+            nome: labelData.nome,
+            codigo: labelData.codigo,
+            status: 'success',
+            duration: Date.now() - startTime
+          });
+        }
+        
         resolveOnce({
           success: true,
           message: 'Dados enviados com sucesso!',
@@ -156,6 +191,22 @@ const sendPrintCommands = async (
     if (!writeResult) {
       client.destroy();
       clearTimeout(operationTimeout);
+      
+      // Registrar erro no histórico
+      if (labelData && startTime) {
+        addPrintHistoryEntry({
+          printerName: printerName || `Impressora ${settings.ipAddress}`,
+          printerId: printerId || 'unknown',
+          printerIp: settings.ipAddress,
+          printStandard: settings.printStandard,
+          nome: labelData.nome,
+          codigo: labelData.codigo,
+          status: 'error',
+          errorMessage: 'Falha ao enviar dados para a impressora',
+          duration: Date.now() - startTime
+        });
+      }
+      
       resolveOnce({
         success: false,
         message: 'Falha ao enviar dados',
@@ -167,6 +218,22 @@ const sendPrintCommands = async (
     logError('❌ Erro ao processar dados:', error);
     client.destroy();
     clearTimeout(operationTimeout);
+    
+    // Registrar erro no histórico
+    if (labelData && startTime) {
+      addPrintHistoryEntry({
+        printerName: printerName || `Impressora ${settings.ipAddress}`,
+        printerId: printerId || 'unknown',
+        printerIp: settings.ipAddress,
+        printStandard: settings.printStandard,
+        nome: labelData.nome,
+        codigo: labelData.codigo,
+        status: 'error',
+        errorMessage: error instanceof Error ? error.message : 'Erro ao processar dados',
+        duration: Date.now() - startTime
+      });
+    }
+    
     resolveOnce({
       success: false,
       message: 'Erro ao processar dados de impressão',
@@ -282,8 +349,11 @@ export {
 export const printData = async (
   content: string,
   settings: PrinterSettings,
-  printerId?: string
+  printerId?: string,
+  printerName?: string,
+  labelData?: { nome: string; codigo: string }
 ): Promise<PrintResult> => {
+  const startTime = Date.now();
   return new Promise((resolve) => {
     const resolveOnce = createResolver(resolve);
 
@@ -302,6 +372,22 @@ export const printData = async (
       // Timeout para toda a operação
       const operationTimeout = setTimeout(() => {
         log('⏰ Timeout geral da operação');
+        
+        // Registrar timeout no histórico
+        if (labelData) {
+          addPrintHistoryEntry({
+            printerName: printerName || `Impressora ${settings.ipAddress}`,
+            printerId: printerId || 'unknown',
+            printerIp: settings.ipAddress,
+            printStandard: settings.printStandard,
+            nome: labelData.nome,
+            codigo: labelData.codigo,
+            status: 'timeout',
+            errorMessage: 'Operação expirou por timeout',
+            duration: Date.now() - startTime
+          });
+        }
+        
         resolveOnce({
           success: false,
           message: 'Timeout na operação de impressão',
@@ -316,11 +402,27 @@ export const printData = async (
       setupEventHandlers(client, settings, resolveOnce, operationTimeout, () => {
         // Callback executado quando conectar com sucesso
         const commands = generatePrintCommands(settings, content);
-        sendPrintCommands(client, commands, settings, resolveOnce, operationTimeout);
+        sendPrintCommands(client, commands, settings, resolveOnce, operationTimeout, printerId, printerName, labelData, startTime);
       });
 
     } catch (error) {
       logError('❌ Erro geral:', error);
+      
+      // Registrar erro crítico no histórico
+      if (labelData) {
+        addPrintHistoryEntry({
+          printerName: printerName || `Impressora ${settings.ipAddress}`,
+          printerId: printerId || 'unknown',
+          printerIp: settings.ipAddress,
+          printStandard: settings.printStandard,
+          nome: labelData.nome,
+          codigo: labelData.codigo,
+          status: 'error',
+          errorMessage: error instanceof Error ? error.message : 'Erro crítico desconhecido',
+          duration: Date.now() - startTime
+        });
+      }
+      
       resolveOnce({
         success: false,
         message: 'Erro interno da aplicação',

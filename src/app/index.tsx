@@ -108,7 +108,17 @@ export default function HomeScreen() {
       ========================
 `;
 
-      const result = await printData(printContent, currentSettings);
+      // Definir nome da impressora (usar o nome salvo ou gerar um baseado no IP)
+      const printerName = selectedPrinter?.name || `Impressora ${currentSettings.ipAddress}`;
+      const printerId = selectedPrinter?.id;
+
+      const result = await printData(
+        printContent, 
+        currentSettings, 
+        printerId,
+        printerName,
+        { nome: name.trim(), codigo: code.trim() }
+      );
 
       console.log("Resultado da impressão:", result);
 

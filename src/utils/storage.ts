@@ -15,12 +15,44 @@ export interface SavedPrinter extends PrinterSettings {
     isDefault: boolean;
 }
 
+export interface PrintHistory {
+    id: string;
+    printerName: string;
+    printerId: string;
+    printerIp: string;
+    printStandard: string;
+    nome: string;
+    codigo: string;
+    dateTime: string;
+    status: 'success' | 'error' | 'timeout';
+    errorMessage?: string;
+    duration?: number; // em milissegundos
+}
+
+export interface HistorySettings {
+    maxHistoryEntries: number; // Limite configurável (10-10000, padrão 100)
+}
+
 const PRINTER_SETTINGS_KEY = '@PrinterApp:printerSettings';
 const SAVED_PRINTERS_KEY = '@PrinterApp:savedPrinters';
 const DEFAULT_PRINTER_KEY = '@PrinterApp:defaultPrinter';
+const PRINT_HISTORY_KEY = '@PrinterApp:printHistory';
+const HISTORY_SETTINGS_KEY = '@PrinterApp:historySettings';
 
 // === FUNÇÕES PARA CONFIGURAÇÕES ATUAIS ===
 
+/* const listAll = async (): Promise<void> => {
+    console.log('Impressoras salvas: ', await AsyncStorage.getItem(SAVED_PRINTERS_KEY));
+    console.log("   ")
+    console.log('Configurações de impressão: ', await AsyncStorage.getItem(PRINTER_SETTINGS_KEY));
+    console.log("   ")
+    console.log('Histórico de impressão: ', await AsyncStorage.getItem(PRINT_HISTORY_KEY));
+    console.log("   ")
+    console.log('Configurações de histórico: ', await AsyncStorage.getItem(HISTORY_SETTINGS_KEY));
+    console.log("   ")
+    console.log('Impressora padrão: ', await AsyncStorage.getItem(DEFAULT_PRINTER_KEY));
+}
+listAll(); */
 export const savePrinterSettings = async (settings: PrinterSettings): Promise<void> => {
     try {
         console.log('Salvando configurações:', settings);
@@ -118,6 +150,8 @@ export const getSavedPrinters = async (): Promise<SavedPrinter[]> => {
     try {
         const jsonValue = await AsyncStorage.getItem(SAVED_PRINTERS_KEY);
 
+        console.log('Impressoras salvas: ', jsonValue);
+
         if (jsonValue != null) {
             const printers = JSON.parse(jsonValue) as SavedPrinter[];
             console.log('Impressoras carregadas do cache:', printers.length);
@@ -179,24 +213,179 @@ export const setDefaultPrinter = async (printerId: string): Promise<void> => {
 
 export const deleteSavedPrinter = async (printerId: string): Promise<void> => {
     try {
-        const savedPrinters = await getSavedPrinters();
-        const updatedPrinters = savedPrinters.filter(p => p.id !== printerId);
-
+        const printers = await getSavedPrinters();
+        const updatedPrinters = printers.filter(printer => printer.id !== printerId);
         await AsyncStorage.setItem(SAVED_PRINTERS_KEY, JSON.stringify(updatedPrinters));
-
-        // Se removeu a impressora padrão, definir uma nova padrão e se não houver impressoras, limpar a configuração
-        const defaultPrinter = await AsyncStorage.getItem(DEFAULT_PRINTER_KEY);
-        if (defaultPrinter === printerId && updatedPrinters.length > 0) {
-            await setDefaultPrinter(updatedPrinters[0].id);
-        } else if (updatedPrinters.length === 0) {
+        
+        // Se estava definido como padrão, remover essa definição
+        const defaultPrinterId = await AsyncStorage.getItem(DEFAULT_PRINTER_KEY);
+        if (defaultPrinterId === printerId) {
             await AsyncStorage.removeItem(DEFAULT_PRINTER_KEY);
-            await AsyncStorage.removeItem(PRINTER_SETTINGS_KEY);
         }
+    } catch (error) {
+        console.error('Erro ao deletar impressora:', error);
+        throw error;
+    }
+};
 
-        console.log('Impressora removida do cache:', printerId);
-    } catch (e: any) {
-        console.error('Erro ao remover impressora do cache:', e);
-        throw e;
+// Funções do histórico de impressões
+export const getHistorySettings = async (): Promise<HistorySettings> => {
+    try {
+        const settingsJson = await AsyncStorage.getItem(HISTORY_SETTINGS_KEY);
+        if (settingsJson) {
+            return JSON.parse(settingsJson);
+        }
+        // Configuração padrão
+        const defaultSettings: HistorySettings = {
+            maxHistoryEntries: 100
+        };
+        await saveHistorySettings(defaultSettings);
+        return defaultSettings;
+    } catch (error) {
+        console.error('Erro ao obter configurações do histórico:', error);
+        return { maxHistoryEntries: 100 };
+    }
+};
+
+export const saveHistorySettings = async (settings: HistorySettings): Promise<void> => {
+    try {
+        // Validar limite entre 10 e 10000
+        const validatedSettings = {
+            ...settings,
+            maxHistoryEntries: Math.min(Math.max(settings.maxHistoryEntries, 10), 10000)
+        };
+        await AsyncStorage.setItem(HISTORY_SETTINGS_KEY, JSON.stringify(validatedSettings));
+    } catch (error) {
+        console.error('Erro ao salvar configurações do histórico:', error);
+        throw error;
+    }
+};
+
+export const getPrintHistory = async (): Promise<PrintHistory[]> => {
+    try {
+        const historyJson = await AsyncStorage.getItem(PRINT_HISTORY_KEY);
+        if (historyJson) {
+            const history = JSON.parse(historyJson);
+            // Ordenar por data mais recente primeiro
+            return history.sort((a: PrintHistory, b: PrintHistory) => 
+                new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
+            );
+        }
+        return [];
+    } catch (error) {
+        console.error('Erro ao obter histórico de impressões:', error);
+        return [];
+    }
+};
+
+export const addPrintHistoryEntry = async (entry: Omit<PrintHistory, 'id' | 'dateTime'>): Promise<void> => {
+    try {
+        const settings = await getHistorySettings();
+        const currentHistory = await getPrintHistory();
+        
+        // Criar nova entrada
+        const newEntry: PrintHistory = {
+            ...entry,
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            dateTime: new Date().toISOString()
+        };
+        
+        // Adicionar no início da lista
+        const updatedHistory = [newEntry, ...currentHistory];
+        
+        // Limitar ao número máximo configurado
+        const limitedHistory = updatedHistory.slice(0, settings.maxHistoryEntries);
+        
+        await AsyncStorage.setItem(PRINT_HISTORY_KEY, JSON.stringify(limitedHistory));
+    } catch (error) {
+        console.error('Erro ao adicionar entrada no histórico:', error);
+        throw error;
+    }
+};
+
+export const clearPrintHistory = async (): Promise<void> => {
+    try {
+        await AsyncStorage.removeItem(PRINT_HISTORY_KEY);
+    } catch (error) {
+        console.error('Erro ao limpar histórico:', error);
+        throw error;
+    }
+};
+
+export const getHistoryByDateRange = async (startDate: Date, endDate: Date): Promise<PrintHistory[]> => {
+    try {
+        const allHistory = await getPrintHistory();
+        return allHistory.filter(entry => {
+            const entryDate = new Date(entry.dateTime);
+            return entryDate >= startDate && entryDate <= endDate;
+        });
+    } catch (error) {
+        console.error('Erro ao obter histórico por período:', error);
+        return [];
+    }
+};
+
+export const getHistoryByPrinter = async (printerId: string): Promise<PrintHistory[]> => {
+    try {
+        const allHistory = await getPrintHistory();
+        return allHistory.filter(entry => entry.printerId === printerId);
+    } catch (error) {
+        console.error('Erro ao obter histórico por impressora:', error);
+        return [];
+    }
+};
+
+export const getHistoryStatistics = async (): Promise<{
+    totalPrints: number;
+    successfulPrints: number;
+    failedPrints: number;
+    successRate: number;
+    mostUsedPrinter: string | null;
+    averageDuration: number;
+}> => {
+    try {
+        const history = await getPrintHistory();
+        console.log('Histórico para estatísticas:', history);
+        
+        const totalPrints = history.length;
+        const successfulPrints = history.filter(entry => entry.status === 'success').length;
+        const failedPrints = totalPrints - successfulPrints;
+        const successRate = totalPrints > 0 ? (successfulPrints / totalPrints) * 100 : 0;
+        
+        // Impressora mais utilizada
+        const printerUsage = history.reduce((acc, entry) => {
+            acc[entry.printerName] = (acc[entry.printerName] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+        
+        const mostUsedPrinter = Object.keys(printerUsage).length > 0 
+            ? Object.entries(printerUsage).reduce((a, b) => printerUsage[a[0]] > printerUsage[b[0]] ? a : b)[0]
+            : null;
+        
+        // Duração média
+        const durationsWithValue = history.filter(entry => entry.duration && entry.duration > 0);
+        const averageDuration = durationsWithValue.length > 0
+            ? durationsWithValue.reduce((sum, entry) => sum + (entry.duration || 0), 0) / durationsWithValue.length
+            : 0;
+        
+        return {
+            totalPrints,
+            successfulPrints,
+            failedPrints,
+            successRate,
+            mostUsedPrinter,
+            averageDuration
+        };
+    } catch (error) {
+        console.error('Erro ao obter estatísticas do histórico:', error);
+        return {
+            totalPrints: 0,
+            successfulPrints: 0,
+            failedPrints: 0,
+            successRate: 0,
+            mostUsedPrinter: null,
+            averageDuration: 0
+        };
     }
 };
 

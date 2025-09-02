@@ -439,7 +439,7 @@ export const printData = async (
  */
 export const testPrint = async (settings: PrinterSettings): Promise<PrintResult> => {
   const testContent = `
- TESTE DE IMPRESSÃO
+TESTE DE IMPRESSÃO
 ====================
 Data: ${new Date().toLocaleDateString('pt-BR')}
 Hora: ${new Date().toLocaleTimeString('pt-BR')}
@@ -447,7 +447,8 @@ IP: ${settings.ipAddress}
 Porta: ${settings.port}
 Padrão: ${settings.printStandard}
 ====================
-Teste realizado com sucesso!`;
+Teste realizado com sucesso!
+`;
 
   return printData(testContent, settings);
 };

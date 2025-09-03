@@ -14,8 +14,11 @@ import {
   getDefaultPrinter,
   setDefaultPrinter,
   deleteSavedPrinter,
+  updateSavedPrinter,
   SavedPrinter,
+  PrinterSettings,
 } from "../utils/storage";
+import { EditPrinterModal } from "../components/EditPrinterModal";
 import { styles } from "@/styles/printersScreen";
 
 export default function PrintersScreen() {
@@ -23,6 +26,8 @@ export default function PrintersScreen() {
   const [defaultPrinterId, setDefaultPrinterId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [printerToEdit, setPrinterToEdit] = useState<SavedPrinter | null>(null);
 
   const loadPrinters = async () => {
     try {
@@ -62,8 +67,28 @@ export default function PrintersScreen() {
   };
 
   const handleEditPrinter = async (printer: SavedPrinter) => {
-    // Implement edit printer functionality
-    console.log("Edit printer:", printer);
+    setPrinterToEdit(printer);
+    setEditModalVisible(true);
+  };
+
+  const handleSavePrinterEdit = async (
+    printerId: string,
+    updatedSettings: PrinterSettings,
+    newName: string
+  ) => {
+    try {
+      await updateSavedPrinter(printerId, updatedSettings, newName);
+      await loadPrinters();
+      setEditModalVisible(false);
+      setPrinterToEdit(null);
+    } catch (error: any) {
+      throw error;
+    }
+  };
+
+  const handleCloseEditModal = () => {
+    setEditModalVisible(false);
+    setPrinterToEdit(null);
   };
 
   const handleDeletePrinter = async (printer: SavedPrinter) => {
@@ -230,6 +255,13 @@ export default function PrintersScreen() {
           ))
         )}
       </ScrollView>
+      
+      <EditPrinterModal
+        visible={editModalVisible}
+        printer={printerToEdit}
+        onClose={handleCloseEditModal}
+        onSave={handleSavePrinterEdit}
+      />
     </View>
   );
 }

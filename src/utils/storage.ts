@@ -211,6 +211,36 @@ export const setDefaultPrinter = async (printerId: string): Promise<void> => {
     }
 };
 
+export const updateSavedPrinter = async (
+    printerId: string,
+    updatedSettings: PrinterSettings,
+    newName: string
+): Promise<void> => {
+    try {
+        const savedPrinters = await getSavedPrinters();
+        const printerIndex = savedPrinters.findIndex(p => p.id === printerId);
+        
+        if (printerIndex === -1) {
+            throw new Error('Impressora não encontrada');
+        }
+
+        const updatedPrinter: SavedPrinter = {
+            ...savedPrinters[printerIndex],
+            ...updatedSettings,
+            name: newName,
+            dateLastUsed: new Date().toISOString()
+        };
+
+        savedPrinters[printerIndex] = updatedPrinter;
+        await AsyncStorage.setItem(SAVED_PRINTERS_KEY, JSON.stringify(savedPrinters));
+        
+        console.log('Impressora atualizada:', updatedPrinter);
+    } catch (error) {
+        console.error('Erro ao atualizar impressora:', error);
+        throw error;
+    }
+};
+
 export const deleteSavedPrinter = async (printerId: string): Promise<void> => {
     try {
         const printers = await getSavedPrinters();

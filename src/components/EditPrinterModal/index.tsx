@@ -6,8 +6,6 @@ import {
   TouchableOpacity,
   Alert,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import { Input } from "../Input";
 import { SavedPrinter, PrinterSettings } from "@/utils/storage";
@@ -49,11 +47,19 @@ export function EditPrinterModal({
   // Carregar dados da impressora quando o modal abrir
   useEffect(() => {
     if (visible && printer) {
+      console.log('Carregando dados da impressora:', printer);
       setPrinterName(printer.name);
       setIpAddress(printer.ipAddress);
       setPort(printer.port.toString());
       setPrintStandard(printer.printStandard);
       setTimeout(printer.timeout?.toString() || "10");
+    } else if (!visible) {
+      // Limpar campos quando modal fechar
+      setPrinterName("");
+      setIpAddress("");
+      setPort("");
+      setPrintStandard("ESC/POS");
+      setTimeout("");
     }
   }, [visible, printer]);
 
@@ -194,121 +200,125 @@ export function EditPrinterModal({
 
   if (!printer) return null;
 
+  console.log('Renderizando modal com dados:', { printerName, ipAddress, port, visible });
+
   return (
     <>
       <Modal
         visible={visible}
         animationType="slide"
-        presentationStyle="pageSheet"
+        transparent={true}
         onRequestClose={handleClose}
       >
-        <KeyboardAvoidingView
-          style={styles.container}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
-          <View style={styles.header}>
-            <Text style={styles.title}>Editar Impressora</Text>
-            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>Cancelar</Text>
-            </TouchableOpacity>
-            <View style={styles.placeholder} />
+        <View style={styles.container}>
+          <View style={styles.modalContainer}>
+            <View style={styles.header}>
+              <Text style={styles.title}>Editar Impressora</Text>
+              <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>X</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView 
+              style={styles.content}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Nome da Impressora *</Text>
+                <Input
+                  placeholder="Ex: Cozinha"
+                  value={printerName}
+                  onChangeText={setPrinterName}
+                  maxLength={25}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Endereço IP *</Text>
+                <Input
+                  placeholder="Ex: 192.168.1.100"
+                  value={ipAddress}
+                  onChangeText={setIpAddress}
+                  keyboardType="numeric"
+                  maxLength={15}
+                />
+                <Text style={styles.helpText}>
+                  Digite o endereço IP da impressora na rede local
+                </Text>
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Porta *</Text>
+                <Input
+                  placeholder="Ex: 9100"
+                  value={port}
+                  onChangeText={setPort}
+                  keyboardType="numeric"
+                  maxLength={5}
+                />
+                <Text style={styles.helpText}>
+                  Porta padrão para impressoras ESC/POS: 9100
+                </Text>
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Padrão de Impressão</Text>
+                <TouchableOpacity
+                  style={styles.customPicker}
+                  onPress={() => setShowStandardModal(true)}
+                >
+                  <Text style={styles.customPickerText}>
+                    {standards.find((s) => s.value === printStandard)?.label ||
+                      "Selecione..."}
+                  </Text>
+                  <Text style={styles.customPickerArrow}>▼</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Timeout (segundos)</Text>
+                <Input
+                  value={timeout}
+                  onChangeText={setTimeout}
+                  returnKeyType="done"
+                  keyboardType="numeric"
+                  placeholder="10"
+                />
+              </View>
+
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    styles.primaryButton,
+                    isLoading && styles.disabledButton,
+                  ]}
+                  onPress={handleSave}
+                  disabled={isLoading}
+                >
+                  <Text style={styles.buttonText}>
+                    {isLoading ? "Salvando..." : "Salvar Alterações"}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    styles.testButton,
+                    isTesting && styles.disabledButton,
+                  ]}
+                  onPress={handleTestPrint}
+                  disabled={isTesting}
+                >
+                  <Text style={styles.testButtonText}>
+                    {isTesting ? "Testando..." : "Testar Impressão"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </View>
-
-          <ScrollView style={styles.content}>
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Nome da Impressora *</Text>
-              <Input
-                placeholder="Ex: Cozinha"
-                value={printerName}
-                onChangeText={setPrinterName}
-                maxLength={25}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Endereço IP *</Text>
-              <Input
-                placeholder="Ex: 192.168.1.100"
-                value={ipAddress}
-                onChangeText={setIpAddress}
-                keyboardType="numeric"
-                maxLength={15}
-              />
-              <Text style={styles.helpText}>
-                Digite o endereço IP da impressora na rede local
-              </Text>
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Porta *</Text>
-              <Input
-                placeholder="Ex: 9100"
-                value={port}
-                onChangeText={setPort}
-                keyboardType="numeric"
-                maxLength={5}
-              />
-              <Text style={styles.helpText}>
-                Porta padrão para impressoras ESC/POS: 9100
-              </Text>
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Padrão de Impressão</Text>
-              <TouchableOpacity
-                style={styles.customPicker}
-                onPress={() => setShowStandardModal(true)}
-              >
-                <Text style={styles.customPickerText}>
-                  {standards.find((s) => s.value === printStandard)?.label ||
-                    "Selecione..."}
-                </Text>
-                <Text style={styles.customPickerArrow}>▼</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Timeout (segundos)</Text>
-              <Input
-                value={timeout}
-                onChangeText={setTimeout}
-                returnKeyType="done"
-                keyboardType="numeric"
-                placeholder="10"
-              />
-            </View>
-
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.button,
-                  styles.primaryButton,
-                  isLoading && styles.disabledButton,
-                ]}
-                onPress={handleSave}
-                disabled={isLoading}
-              >
-                <Text style={styles.buttonText}>
-                  {isLoading ? "Salvando..." : "Salvar Alterações"}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.button,
-                  styles.testButton,
-                  isTesting && styles.disabledButton,
-                ]}
-                onPress={handleTestPrint}
-                disabled={isTesting}
-              >
-                <Text style={styles.testButtonText}>
-                  {isTesting ? "Testando..." : "Testar Impressão"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
 
       {/* Modal para seleção de padrão de impressão */}

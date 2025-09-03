@@ -2,27 +2,39 @@ import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 15,
+  },
+  modalContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    width: "100%",
     height: "100%",
-    backgroundColor: "red",
+    maxWidth: 500,
+    maxHeight: "90%",
+    overflow: "hidden",
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    width: "100%",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    paddingTop: 10,
-    backgroundColor: "#f8f9fa",
+    paddingVertical: 8,
+    backgroundColor: "#fcfcfcff",
     borderBottomWidth: 1,
-    borderBottomColor: "#e9ecef",
+    borderBottomColor: "#000000ff",
   },
   closeButton: {
     paddingVertical: 8,
     paddingHorizontal: 12,
+    backgroundColor: "#6200EE",
+    borderRadius: 8,
   },
   closeButtonText: {
-    color: "#6200EE",
+    color: "#ffffffff",
     fontSize: 16,
     fontWeight: "500",
   },
@@ -31,15 +43,15 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#2c3e50",
   },
-  placeholder: {
-    width: 60,
-  },
   content: {
-    flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
   inputContainer: {
-    marginVertical: 4,
+    marginBottom: 4,
   },
   label: {
     fontSize: 16,

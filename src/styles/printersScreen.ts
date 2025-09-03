@@ -64,10 +64,7 @@ export const styles = StyleSheet.create({
         shadowRadius: 4,
     },
     printerHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        marginBottom: 12,
+        flexDirection: "column",
     },
     printerTitle: {
         flex: 1,
@@ -103,7 +100,9 @@ export const styles = StyleSheet.create({
         fontWeight: "bold",
     },
     actionsContainer: {
-        flexDirection: "column",
+        flexDirection: "row",
+        width: "100%",
+        justifyContent: "flex-end",
     },
     actionButton: {
         padding: 8,

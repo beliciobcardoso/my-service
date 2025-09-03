@@ -28,7 +28,7 @@ export default function PrintersScreen() {
     try {
       const printers = await getSavedPrinters();
       const defaultPrinter = await getDefaultPrinter();
-      
+
       setSavedPrinters(printers);
       setDefaultPrinterId(defaultPrinter?.id || null);
     } catch (error) {
@@ -59,6 +59,11 @@ export default function PrintersScreen() {
     } catch (error) {
       Alert.alert("Erro", "Não foi possível definir a impressora padrão.");
     }
+  };
+
+  const handleEditPrinter = async (printer: SavedPrinter) => {
+    // Implement edit printer functionality
+    console.log("Edit printer:", printer);
   };
 
   const handleDeletePrinter = async (printer: SavedPrinter) => {
@@ -183,6 +188,13 @@ export default function PrintersScreen() {
 
                   <TouchableOpacity
                     style={styles.actionButton}
+                    onPress={() => handleEditPrinter(printer)}
+                  >
+                    <Ionicons name="pencil-outline" size={20} color="#3498db" />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.actionButton}
                     onPress={() => handleDeletePrinter(printer)}
                   >
                     <Ionicons name="trash-outline" size={20} color="#e74c3c" />
@@ -193,7 +205,9 @@ export default function PrintersScreen() {
               <View style={styles.printerDetails}>
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Padrão:</Text>
-                  <Text style={styles.detailValue}>{printer.printStandard}</Text>
+                  <Text style={styles.detailValue}>
+                    {printer.printStandard}
+                  </Text>
                 </View>
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Timeout:</Text>
@@ -219,4 +233,3 @@ export default function PrintersScreen() {
     </View>
   );
 }
-

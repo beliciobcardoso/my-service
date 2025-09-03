@@ -41,36 +41,62 @@ const createTcpClient = (settings: PrinterSettings) => {
 };
 
 // Centralizar tratamento de erros de conexão
-const handleConnectionError = (error: any, settings: PrinterSettings): PrintResult => {
+const handleConnectionError = (
+  error: any, 
+  settings: PrinterSettings, 
+  printerId?: string,
+  printerName?: string,
+  labelData?: { nome: string; codigo: string },
+  startTime?: number
+): PrintResult => {
   logError('❌ Erro de conexão capturado:', error);
 
   const errorStr = error?.message || error?.toString() || 'Erro desconhecido';
   log('🔍 Tipo de erro:', errorStr);
 
+  let result: PrintResult;
+
   // Timeout específico
   if (errorStr.includes('ETIMEDOUT') || errorStr.includes('timeout')) {
-    return {
+    result = {
       success: false,
       message: 'Impressora não responde (timeout)',
       details: `A impressora em ${settings.ipAddress}:${settings.port} demorou muito para responder. Verifique se está ligada.`
     };
   }
-
   // Problema de rede
-  if (errorStr.includes('ENETUNREACH') || errorStr.includes('Network unreachable')) {
-    return {
+  else if (errorStr.includes('ENETUNREACH') || errorStr.includes('Network unreachable')) {
+    result = {
       success: false,
       message: 'Problema de rede',
       details: 'Não foi possível acessar a rede. Verifique sua conexão Wi-Fi.'
     };
   }
-
   // Qualquer outro erro = impressora desligada
-  return {
-    success: false,
-    message: 'Impressora desligada',
-    details: `A impressora em ${settings.ipAddress}:${settings.port} não está respondendo. Verifique se está ligada e conectada à rede.`
-  };
+  else {
+    result = {
+      success: false,
+      message: 'Impressora desligada',
+      details: `A impressora em ${settings.ipAddress}:${settings.port} não está respondendo. Verifique se está ligada e conectada à rede.`
+    };
+  }
+
+  // Registrar erro de conexão no histórico
+  if (labelData && startTime) {
+    addPrintHistoryEntry({
+      printerName: printerName || `Impressora ${settings.ipAddress}`,
+      printerId: printerId || 'unknown',
+      printerIp: settings.ipAddress,
+      printStandard: settings.printStandard,
+      nome: labelData.nome,
+      codigo: labelData.codigo,
+      status: 'error',
+      errorMessage: result.message,
+      duration: Date.now() - startTime
+    }).catch(e => logError('Erro ao registrar histórico de falha de conexão:', e));
+  }
+
+  return result;
 };
 
 // Configurar todos os event handlers do cliente
@@ -79,13 +105,17 @@ const setupEventHandlers = (
   settings: PrinterSettings,
   resolveOnce: (result: PrintResult) => void,
   operationTimeout: ReturnType<typeof setTimeout>,
-  onConnect: () => void
+  onConnect: () => void,
+  printerId?: string,
+  printerName?: string,
+  labelData?: { nome: string; codigo: string },
+  startTime?: number
 ) => {
   // Handler de erro (sempre primeiro)
   client.on('error', (error: any) => {
     client.destroy();
     clearTimeout(operationTimeout);
-    const result = handleConnectionError(error, settings);
+    const result = handleConnectionError(error, settings, printerId, printerName, labelData, startTime);
     resolveOnce(result);
   });
 
@@ -94,6 +124,22 @@ const setupEventHandlers = (
     log('⏰ Timeout de conexão');
     client.destroy();
     clearTimeout(operationTimeout);
+    
+    // Registrar timeout no histórico
+    if (labelData && startTime) {
+      addPrintHistoryEntry({
+        printerName: printerName || `Impressora ${settings.ipAddress}`,
+        printerId: printerId || 'unknown',
+        printerIp: settings.ipAddress,
+        printStandard: settings.printStandard,
+        nome: labelData.nome,
+        codigo: labelData.codigo,
+        status: 'timeout',
+        errorMessage: 'Timeout de conexão',
+        duration: Date.now() - startTime
+      }).catch(e => logError('Erro ao registrar histórico de timeout de conexão:', e));
+    }
+    
     resolveOnce({
       success: false,
       message: 'Impressora não responde',
@@ -385,7 +431,7 @@ export const printData = async (
             status: 'timeout',
             errorMessage: 'Operação expirou por timeout',
             duration: Date.now() - startTime
-          });
+          }).catch(e => logError('Erro ao registrar histórico de timeout geral:', e));
         }
         
         resolveOnce({
@@ -403,7 +449,7 @@ export const printData = async (
         // Callback executado quando conectar com sucesso
         const commands = generatePrintCommands(settings, content);
         sendPrintCommands(client, commands, settings, resolveOnce, operationTimeout, printerId, printerName, labelData, startTime);
-      });
+      }, printerId, printerName, labelData, startTime);
 
     } catch (error) {
       logError('❌ Erro geral:', error);
@@ -420,7 +466,7 @@ export const printData = async (
           status: 'error',
           errorMessage: error instanceof Error ? error.message : 'Erro crítico desconhecido',
           duration: Date.now() - startTime
-        });
+        }).catch(e => logError('Erro ao registrar histórico de erro crítico:', e));
       }
       
       resolveOnce({

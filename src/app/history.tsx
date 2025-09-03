@@ -9,14 +9,12 @@ import {
     ScrollView,
     RefreshControl
 } from 'react-native';
-import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import {
     getPrintHistory,
     clearPrintHistory,
     getHistoryStatistics,
-    getSavedPrinters,
     PrintHistory
 } from '../utils/storage';
 import { historyStyles } from '../styles/historyStyles';
@@ -44,16 +42,18 @@ export default function HistoryScreen() {
     const loadHistory = async () => {
         try {
             setLoading(true);
-            const [historyData, statsData, savedPrinters] = await Promise.all([
+            const [historyData, statsData] = await Promise.all([
                 getPrintHistory(),
-                getHistoryStatistics(),
-                getSavedPrinters()
+                getHistoryStatistics()
             ]);
             
             setHistory(historyData);
             setFilteredHistory(historyData);
             setStats(statsData);
-            setPrinters(['all', ...savedPrinters.map(p => p.name)]);
+            
+            // Extrair nomes únicos das impressoras do histórico
+            const uniquePrinterNames = [...new Set(historyData.map(entry => entry.printerName))];
+            setPrinters(['all', ...uniquePrinterNames.sort()]);
         } catch (error) {
             console.error('Erro ao carregar histórico:', error);
         } finally {
@@ -142,7 +142,7 @@ export default function HistoryScreen() {
                         <Text style={historyStyles.historyName}>Nome: {item.nome}</Text>
                         <Text style={historyStyles.historyCode}>Código: {item.codigo}</Text>
                         <Text style={historyStyles.historyPrinter}>
-                            <Ionicons name="print" size={12} color="#666" />{' '}{item.printerIp}
+                            <Ionicons name="print" size={12} color="#666" />{' '}{item.printerName}
                         </Text>
                     </View>
                     <View style={historyStyles.historyStatus}>

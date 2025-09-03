@@ -118,65 +118,117 @@ export default function HistorySettingsScreen() {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Sugestões de Configuração</Text>
                     
-                    <View style={styles.presetContainer}>
+                    <View style={styles.presetList}>
                         <TouchableOpacity
                             style={[
-                                styles.presetButton,
-                                tempValue === '50' && styles.presetButtonActive
+                                styles.presetListItem,
+                                tempValue === '10' && styles.presetListItemActive
                             ]}
-                            onPress={() => setTempValue('50')}
+                            onPress={() => setTempValue('10')}
                         >
-                            <Text style={[
-                                styles.presetButtonText,
-                                tempValue === '50' && styles.presetButtonTextActive
-                            ]}>
-                                50 - Uso leve
-                            </Text>
+                            <View style={styles.presetListContent}>
+                                <View style={styles.presetListLeft}>
+                                    <Text style={[
+                                        styles.presetListTitle,
+                                        tempValue === '10' && styles.presetListTitleActive
+                                    ]}>
+                                        10 entradas
+                                    </Text>
+                                    <Text style={[
+                                        styles.presetListSubtitle,
+                                        tempValue === '10' && styles.presetListSubtitleActive
+                                    ]}>
+                                        Uso mínimo - Para testes ou uso muito esporádico
+                                    </Text>
+                                </View>
+                                {tempValue === '10' && (
+                                    <Ionicons name="checkmark-circle" size={20} color="#007AFF" />
+                                )}
+                            </View>
                         </TouchableOpacity>
 
                         <TouchableOpacity
                             style={[
-                                styles.presetButton,
-                                tempValue === '100' && styles.presetButtonActive
+                                styles.presetListItem,
+                                tempValue === '100' && styles.presetListItemActive
                             ]}
                             onPress={() => setTempValue('100')}
                         >
-                            <Text style={[
-                                styles.presetButtonText,
-                                tempValue === '100' && styles.presetButtonTextActive
-                            ]}>
-                                100 - Padrão
-                            </Text>
+                            <View style={styles.presetListContent}>
+                                <View style={styles.presetListLeft}>
+                                    <Text style={[
+                                        styles.presetListTitle,
+                                        tempValue === '100' && styles.presetListTitleActive
+                                    ]}>
+                                        100 entradas
+                                    </Text>
+                                    <Text style={[
+                                        styles.presetListSubtitle,
+                                        tempValue === '100' && styles.presetListSubtitleActive
+                                    ]}>
+                                        Padrão - Configuração recomendada
+                                    </Text>
+                                </View>
+                                {tempValue === '100' && (
+                                    <Ionicons name="checkmark-circle" size={20} color="#007AFF" />
+                                )}
+                            </View>
                         </TouchableOpacity>
 
                         <TouchableOpacity
                             style={[
-                                styles.presetButton,
-                                tempValue === '500' && styles.presetButtonActive
+                                styles.presetListItem,
+                                tempValue === '500' && styles.presetListItemActive
                             ]}
                             onPress={() => setTempValue('500')}
                         >
-                            <Text style={[
-                                styles.presetButtonText,
-                                tempValue === '500' && styles.presetButtonTextActive
-                            ]}>
-                                500 - Uso moderado
-                            </Text>
+                            <View style={styles.presetListContent}>
+                                <View style={styles.presetListLeft}>
+                                    <Text style={[
+                                        styles.presetListTitle,
+                                        tempValue === '500' && styles.presetListTitleActive
+                                    ]}>
+                                        500 entradas
+                                    </Text>
+                                    <Text style={[
+                                        styles.presetListSubtitle,
+                                        tempValue === '500' && styles.presetListSubtitleActive
+                                    ]}>
+                                        Uso moderado - Para negócios pequenos
+                                    </Text>
+                                </View>
+                                {tempValue === '500' && (
+                                    <Ionicons name="checkmark-circle" size={20} color="#007AFF" />
+                                )}
+                            </View>
                         </TouchableOpacity>
 
                         <TouchableOpacity
                             style={[
-                                styles.presetButton,
-                                tempValue === '1000' && styles.presetButtonActive
+                                styles.presetListItem,
+                                tempValue === '1000' && styles.presetListItemActive
                             ]}
                             onPress={() => setTempValue('1000')}
                         >
-                            <Text style={[
-                                styles.presetButtonText,
-                                tempValue === '1000' && styles.presetButtonTextActive
-                            ]}>
-                                1.000 - Uso intenso
-                            </Text>
+                            <View style={styles.presetListContent}>
+                                <View style={styles.presetListLeft}>
+                                    <Text style={[
+                                        styles.presetListTitle,
+                                        tempValue === '1000' && styles.presetListTitleActive
+                                    ]}>
+                                        1.000 entradas
+                                    </Text>
+                                    <Text style={[
+                                        styles.presetListSubtitle,
+                                        tempValue === '1000' && styles.presetListSubtitleActive
+                                    ]}>
+                                        Uso intenso - Para alta demanda de impressões
+                                    </Text>
+                                </View>
+                                {tempValue === '1000' && (
+                                    <Ionicons name="checkmark-circle" size={20} color="#007AFF" />
+                                )}
+                            </View>
                         </TouchableOpacity>
                     </View>
                 </View>

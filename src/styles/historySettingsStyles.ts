@@ -103,6 +103,46 @@ export const historySettingsStyles = StyleSheet.create({
         color: '#007AFF',
         fontWeight: '600',
     },
+    // Novos estilos para lista
+    presetList: {
+        gap: 8,
+    },
+    presetListItem: {
+        padding: 16,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        backgroundColor: '#fff',
+    },
+    presetListItemActive: {
+        borderColor: '#007AFF',
+        backgroundColor: '#f0f8ff',
+    },
+    presetListContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    presetListLeft: {
+        flex: 1,
+    },
+    presetListTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#333',
+        marginBottom: 4,
+    },
+    presetListTitleActive: {
+        color: '#007AFF',
+    },
+    presetListSubtitle: {
+        fontSize: 14,
+        color: '#666',
+        lineHeight: 18,
+    },
+    presetListSubtitleActive: {
+        color: '#0056b3',
+    },
     infoContainer: {
         gap: 12,
     },

@@ -2,17 +2,18 @@ import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: "#f8f9fa",
+    height: "100%",
+    backgroundColor: "red",
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
+    width: "100%",
     alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 16,
-    paddingTop: 60,
-    backgroundColor: "#fff",
+    paddingTop: 10,
+    backgroundColor: "#f8f9fa",
     borderBottomWidth: 1,
     borderBottomColor: "#e9ecef",
   },
@@ -38,8 +39,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   inputContainer: {
-    marginBottom: 20,
-    marginTop: 20,
+    marginVertical: 4,
   },
   label: {
     fontSize: 16,

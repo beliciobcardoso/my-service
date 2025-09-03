@@ -18,7 +18,11 @@ interface EditPrinterModalProps {
   visible: boolean;
   printer: SavedPrinter | null;
   onClose: () => void;
-  onSave: (printerId: string, updatedSettings: PrinterSettings, newName: string) => Promise<void>;
+  onSave: (
+    printerId: string,
+    updatedSettings: PrinterSettings,
+    newName: string
+  ) => Promise<void>;
 }
 
 export function EditPrinterModal({
@@ -203,10 +207,10 @@ export function EditPrinterModal({
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
           <View style={styles.header}>
+            <Text style={styles.title}>Editar Impressora</Text>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
               <Text style={styles.closeButtonText}>Cancelar</Text>
             </TouchableOpacity>
-            <Text style={styles.title}>Editar Impressora</Text>
             <View style={styles.placeholder} />
           </View>
 

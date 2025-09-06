@@ -5,6 +5,7 @@ export interface PrinterSettings {
     port: number;
     printStandard: string;
     timeout: number;
+    fontSize: number; // 0x00 = normal, 0x11 = dupla, 0x22 = tripla, 0x33 = 4x
 }
 
 export interface SavedPrinter extends PrinterSettings {
@@ -76,6 +77,11 @@ export const getPrinterSettings = async (): Promise<PrinterSettings | null> => {
             // Garantir que timeout existe para configurações antigas
             if (!settings.timeout) {
                 settings.timeout = 10;
+            }
+
+            // Garantir que fontSize existe para configurações antigas (padrão normal)
+            if (settings.fontSize === undefined) {
+                settings.fontSize = 0x00; // Tamanho normal como padrão
             }
 
             return settings;

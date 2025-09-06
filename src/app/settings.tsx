@@ -24,10 +24,12 @@ export default function SettingsScreen() {
   const [port, setPort] = useState<string>("9100");
   const [printStandard, setPrintStandard] = useState<string>("ESC/POS");
   const [timeout, setTimeout] = useState<string>("10");
+  const [fontSize, setFontSize] = useState<number>(0x00); // Padrão normal
   const [printerName, setPrinterName] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isTesting, setIsTesting] = useState<boolean>(false);
   const [showPickerModal, setShowPickerModal] = useState<boolean>(false);
+  const [showFontSizeModal, setShowFontSizeModal] = useState<boolean>(false);
 
   const standards = [
     { label: "ESC/POS", value: "ESC/POS" },
@@ -35,9 +37,30 @@ export default function SettingsScreen() {
     { label: "EPL (Eltron)", value: "EPL" },
   ];
 
+  const fontSizes = [
+    { label: "Normal (1x1)", value: 0x00, description: "Tamanho padrão" },
+    { label: "Largura Dupla (2x1)", value: 0x01, description: "Apenas largura dupla" },
+    { label: "Altura Dupla (1x2)", value: 0x10, description: "Apenas altura dupla" },
+    { label: "Dupla (2x2)", value: 0x11, description: "Altura e largura dupla" },
+    { label: "Largura Tripla (3x1)", value: 0x02, description: "Apenas largura tripla" },
+    { label: "Altura Tripla (1x3)", value: 0x20, description: "Apenas altura tripla" },
+    { label: "Tripla (3x3)", value: 0x22, description: "Altura e largura tripla" },
+    { label: "Máxima (4x4)", value: 0x33, description: "Altura e largura 4x" },
+  ];
+
   const handleStandardSelect = (value: string) => {
     setPrintStandard(value);
     setShowPickerModal(false);
+  };
+
+  const handleFontSizeSelect = (value: number) => {
+    setFontSize(value);
+    setShowFontSizeModal(false);
+  };
+
+  const getFontSizeLabel = (value: number) => {
+    const fontOption = fontSizes.find(f => f.value === value);
+    return fontOption ? fontOption.label : "Normal (1x1)";
   };
 
   useEffect(() => {
@@ -49,6 +72,7 @@ export default function SettingsScreen() {
           setPort(settings.port.toString());
           setPrintStandard(settings.printStandard);
           setTimeout(settings.timeout?.toString() || "10");
+          setFontSize(settings.fontSize || 0x00); // Carregar fontSize ou usar padrão
         }
       } catch (error) {
         console.error("Erro ao carregar configurações:", error);
@@ -118,6 +142,7 @@ export default function SettingsScreen() {
         port: parseInt(port.trim(), 10),
         printStandard: printStandard,
         timeout: parseInt(timeout.trim(), 10),
+        fontSize: fontSize,
       };
 
       await savePrinterSettings(settings);
@@ -162,6 +187,7 @@ export default function SettingsScreen() {
         port: parseInt(port.trim(), 10),
         printStandard: printStandard,
         timeout: parseInt(timeout.trim(), 10),
+        fontSize: fontSize,
       };
 
       const result = await testPrint(settings);
@@ -202,6 +228,8 @@ export default function SettingsScreen() {
             setPort("");
             setPrintStandard("ESC/POS");
             setTimeout("");
+            setFontSize(0x00); // Resetar para padrão normal
+            setPrinterName("");
           },
         },
       ]
@@ -318,6 +346,69 @@ export default function SettingsScreen() {
               keyboardType="numeric"
               placeholder="10"
             />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Tamanho da Fonte</Text>
+
+            <TouchableOpacity
+              style={styles.customPicker}
+              onPress={() => setShowFontSizeModal(true)}
+            >
+              <Text style={styles.customPickerText}>
+                {getFontSizeLabel(fontSize)}
+              </Text>
+              <Text style={styles.customPickerArrow}>▼</Text>
+            </TouchableOpacity>
+
+            <Modal
+              visible={showFontSizeModal}
+              transparent={true}
+              animationType="slide"
+              onRequestClose={() => setShowFontSizeModal(false)}
+            >
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalTitle}>Selecione o Tamanho da Fonte</Text>
+                  {fontSizes.map((fontOption) => (
+                    <TouchableOpacity
+                      key={fontOption.value}
+                      style={[
+                        styles.modalOption,
+                        fontSize === fontOption.value &&
+                          styles.modalOptionSelected,
+                      ]}
+                      onPress={() => handleFontSizeSelect(fontOption.value)}
+                    >
+                      <View>
+                        <Text
+                          style={[
+                            styles.modalOptionText,
+                            fontSize === fontOption.value &&
+                              styles.modalOptionTextSelected,
+                          ]}
+                        >
+                          {fontOption.label}
+                        </Text>
+                        <Text style={styles.helpText}>
+                          {fontOption.description}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                  <TouchableOpacity
+                    style={styles.modalCancel}
+                    onPress={() => setShowFontSizeModal(false)}
+                  >
+                    <Text style={styles.modalCancelText}>Cancelar</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
+
+            <Text style={styles.helpText}>
+              Define o tamanho da fonte na impressão (ESC/POS apenas)
+            </Text>
           </View>
 
           <View style={styles.buttonContainer}>

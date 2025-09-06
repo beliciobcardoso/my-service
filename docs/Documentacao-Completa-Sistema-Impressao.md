@@ -17,6 +17,7 @@
 - **RF07**: Gerenciar múltiplas configurações de impressora salvas **✅ IMPLEMENTADO**
 - **RF08**: Adicionar, editar e excluir configurações de impressora **✅ IMPLEMENTADO**
 - **RF09**: Definir impressora padrão para uso automático **✅ IMPLEMENTADO**
+- **RF10**: Configurar tamanho da fonte de impressão pelo usuário **✅ IMPLEMENTADO**
 
 ### 1.2. Requisitos Não-Funcionais
 - **RNF01**: Interface responsiva e intuitiva **✅ IMPLEMENTADO**
@@ -48,11 +49,20 @@
 
 #### UC03: Testar Conectividade
 - **Ator**: Usuário
-- **Pré-condição**: Configurações preenchidas
 - **Fluxo Principal**:
-  1. Sistema estabelece conexão TCP
-  2. Envia documento de teste
-  3. Retorna status da operação
+  1. Usuário acessa configurações
+  2. Pressiona botão "Testar Impressão"
+  3. Sistema valida conectividade
+  4. Sistema confirma resultado do teste
+
+#### UC04: Configurar Tamanho da Fonte
+- **Ator**: Usuário
+- **Pré-condição**: Impressora com padrão ESC/POS
+- **Fluxo Principal**:
+  1. Usuário acessa configurações da impressora
+  2. Seleciona tamanho da fonte desejado
+  3. Sistema salva configuração
+  4. Impressões subsequentes usam o tamanho configurado
 
 #### UC04: Gerenciar Múltiplas Impressoras
 - **Ator**: Usuário
@@ -208,6 +218,7 @@ export interface PrinterSettings {
   port: number;
   printStandard: string;
   timeout: number;
+  fontSize: number; // Configuração de tamanho da fonte (0x00-0x33)
 }
 ```
 
@@ -230,6 +241,45 @@ export interface SavedPrinter extends PrinterSettings {
 - Centralização: `\x1Ba\x01`
 - Alimentação de papel: `\x1Bd\x03`
 - Corte: `\x1DV\x00`
+
+##### Comandos de Tamanho de Fonte ESC/POS
+O sistema utiliza o comando `GS + '!' + String.fromCharCode(valor)` para controlar o tamanho da fonte:
+
+| Valor Hex | Valor Dec | Largura | Altura | Comando | Descrição |
+|-----------|-----------|---------|--------|---------|-----------|
+| `0x00` | `0` | 1x | 1x | `String.fromCharCode(0x00)` | **Tamanho normal** (padrão) |
+| `0x01` | `1` | 2x | 1x | `String.fromCharCode(0x01)` | Largura dupla |
+| `0x10` | `16` | 1x | 2x | `String.fromCharCode(0x10)` | Altura dupla |
+| `0x11` | `17` | 2x | 2x | `String.fromCharCode(0x11)` | **Dupla altura e largura** (atual) |
+| `0x02` | `2` | 3x | 1x | `String.fromCharCode(0x02)` | Largura tripla |
+| `0x20` | `32` | 1x | 3x | `String.fromCharCode(0x20)` | Altura tripla |
+| `0x22` | `34` | 3x | 3x | `String.fromCharCode(0x22)` | Tripla altura e largura |
+| `0x03` | `3` | 4x | 1x | `String.fromCharCode(0x03)` | Largura 4x |
+| `0x30` | `48` | 1x | 4x | `String.fromCharCode(0x30)` | Altura 4x |
+| `0x33` | `51` | 4x | 4x | `String.fromCharCode(0x33)` | 4x altura e largura |
+
+**Exemplos de implementação:**
+```typescript
+// Tamanho normal (original)
+commands += GS + '!' + String.fromCharCode(0x00);
+
+// Atual - dupla altura e largura (configuração atual do sistema)
+commands += GS + '!' + String.fromCharCode(0x11);
+
+// Apenas largura dupla
+commands += GS + '!' + String.fromCharCode(0x01);
+
+// Tripla altura e largura
+commands += GS + '!' + String.fromCharCode(0x22);
+
+// Máximo - 4x altura e largura
+commands += GS + '!' + String.fromCharCode(0x33);
+```
+
+**Fórmula de cálculo do valor:**
+- **Largura:** `(largura - 1) << 0` (bits 0-3)
+- **Altura:** `(altura - 1) << 4` (bits 4-7)
+- **Valor final:** `largura_bits | altura_bits`
 
 #### ZPL (Zebra)
 - Início do rótulo: `^XA`
@@ -429,3 +479,69 @@ O sistema está **100% FUNCIONAL** e **PRONTO PARA PRODUÇÃO** com **TODAS as f
 - Implementar sincronização em nuvem para backup
 - Adicionar métricas de uso e analytics
 - Desenvolver modo offline com fila de impressão
+
+## 12. BUILD E DISTRIBUIÇÃO
+
+### 12.1. Geração de APK para Instalação Manual
+
+Para gerar o APK do aplicativo para instalação manual no celular, execute:
+
+```bash
+# Navegar para o diretório do projeto
+cd "/home/belicio-cardoso/Área de trabalho/Projetos/pessoal/my-service"
+
+# Gerar APK usando Gradle
+npm run build:apk
+```
+
+**Ou diretamente via Gradle:**
+```bash
+cd "/home/belicio-cardoso/Área de trabalho/Projetos/pessoal/my-service/android"
+./gradlew assembleRelease
+```
+
+### 12.2. Localização do APK Gerado
+
+O APK será gerado no seguinte caminho:
+
+```
+/home/belicio-cardoso/Área de trabalho/Projetos/pessoal/my-service/android/app/build/outputs/apk/release/app-release.apk
+```
+
+**Estrutura de pastas:**
+```
+my-service/
+└── android/
+    └── app/
+        └── build/
+            └── outputs/
+                └── apk/
+                    └── release/
+                        └── app-release.apk  ← APK para instalação manual
+```
+
+### 12.3. Comandos Disponíveis no package.json
+
+```json
+{
+  "scripts": {
+    "build:apk": "cd android && ./gradlew assembleRelease",
+    "build:android": "eas build --platform android",
+    "build:android-apk": "eas build --platform android --profile preview"
+  }
+}
+```
+
+### 12.4. Versão Atual
+
+- **Versão**: 1.1.0
+- **Build Type**: Release
+- **Target**: Android APK para instalação manual
+- **Funcionalidades**: Sistema completo de impressão com múltiplos códigos
+
+### 12.5. Instalação no Dispositivo
+
+1. Transfira o arquivo `app-release.apk` para o dispositivo Android
+2. Habilite "Fontes desconhecidas" nas configurações de segurança
+3. Execute o arquivo APK para instalar o aplicativo
+4. Configure a impressora na primeira execução

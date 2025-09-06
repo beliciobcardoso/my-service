@@ -100,13 +100,13 @@ export default function HomeScreen() {
     try {
       const printContent = `
   ENTREGADOR
-  ========================
+  =====================
   Nome: ${name.trim()}
   Pedidos:\n${codes.map((c, i) => `  ${i + 1}: ${c.trim()}`).join("\n")}
-  ------------------------
+  ---------------------
   Data: ${new Date().toLocaleDateString()}
   Hora: ${new Date().toLocaleTimeString()}
-  ========================
+  =====================
 `;
 
       // Definir nome da impressora (usar o nome salvo ou gerar um baseado no IP)

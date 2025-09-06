@@ -335,7 +335,7 @@ const generatePrintCommands = (settings: PrinterSettings, content: string): stri
       
       commands += ESC + '@'; // Inicializar impressora
       commands += ESC + 't' + String.fromCharCode(2); // Codepage 850 (Latin1)
-      commands += GS + '!' + String.fromCharCode(0x11); // Tamanho da fonte: dupla altura e largura
+      commands += GS + '!' + String.fromCharCode(settings.fontSize || 0x00); // Tamanho da fonte configurável
       commands += ESC + 'a' + String.fromCharCode(1); // Centralizar
       commands += convertedContent + '\n';
       commands += ESC + 'd' + String.fromCharCode(3); // Alimentar papel
@@ -365,7 +365,7 @@ const generatePrintCommands = (settings: PrinterSettings, content: string): stri
       
       commands += ESC_DEFAULT + '@';
       commands += ESC_DEFAULT + 't' + String.fromCharCode(2); // Codepage 850 (Latin1)
-      commands += GS_DEFAULT + '!' + String.fromCharCode(0x11); // Tamanho da fonte: dupla altura e largura
+      commands += GS_DEFAULT + '!' + String.fromCharCode(settings.fontSize || 0x00); // Tamanho da fonte configurável
       commands += ESC_DEFAULT + 'a' + String.fromCharCode(1);
       commands += convertedContent + '\n';
       commands += ESC_DEFAULT + 'd' + String.fromCharCode(3);

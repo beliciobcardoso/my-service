@@ -6,6 +6,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
 } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { printData } from "@/utils/printer";
@@ -22,7 +23,7 @@ import { stylesHome } from "@/styles/styles";
 
 export default function HomeScreen() {
   const [name, setName] = useState<string>("");
-  const [code, setCode] = useState<string>("");
+  const [codes, setCodes] = useState<string[]>([""]);
   const [printerSettings, setPrinterSettings] =
     useState<PrinterSettings | null>(null);
   const [savedPrinters, setSavedPrinters] = useState<SavedPrinter[]>([]);
@@ -56,10 +57,10 @@ export default function HomeScreen() {
   );
 
   const handleConfirmPrint = async () => {
-    if (!name.trim() || !code.trim()) {
+    if (!name.trim() || codes.some(c => !c.trim())) {
       Alert.alert(
         "Campos obrigatórios",
-        "Por favor, preencha o nome e o código."
+        "Por favor, preencha o nome e todos os códigos."
       );
       return;
     }
@@ -97,15 +98,15 @@ export default function HomeScreen() {
     setIsLoading(true);
 
     try {
-      const printContent = `
-      ENTREGADOR
-      ========================
-      Nome: ${name.trim()}
-      Codigo: ${code.trim()}
-      ------------------------
-      Data: ${new Date().toLocaleDateString()}
-      Hora: ${new Date().toLocaleTimeString()}
-      ========================
+  const printContent = `
+  ENTREGADOR
+  ========================
+  Nome: ${name.trim()}
+  Pedidos:\n${codes.map((c, i) => `  ${i + 1}: ${c.trim()}`).join("\n")}
+  ------------------------
+  Data: ${new Date().toLocaleDateString()}
+  Hora: ${new Date().toLocaleTimeString()}
+  ========================
 `;
 
       // Definir nome da impressora (usar o nome salvo ou gerar um baseado no IP)
@@ -117,7 +118,7 @@ export default function HomeScreen() {
         currentSettings, 
         printerId,
         printerName,
-        { nome: name.trim(), codigo: code.trim() }
+  { nome: name.trim(), codigo: codes.map(c => c.trim()).join(", ") }
       );
 
       console.log("Resultado da impressão:", result);
@@ -127,14 +128,14 @@ export default function HomeScreen() {
           text: "OK",
           onPress: () => {
             setName("");
-            setCode("");
+            setCodes([""]);
           },
         },
       ],
     {
       onDismiss: () => {
-        setName("");
-        setCode("");
+  setName("");
+  setCodes([""]);
       },
     });
     } catch (error: any) {
@@ -169,13 +170,40 @@ export default function HomeScreen() {
           </View>
 
           <View style={stylesHome.inputContainer}>
-            <Text style={stylesHome.label}>Código do pedido IFood *</Text>
-            <Input
-              placeholder="Digite o código do pedido IFood"
-              value={code}
-              onChangeText={setCode}
-              maxLength={20}
-            />
+            <Text style={stylesHome.label}>Códigos do pedido IFood *</Text>
+            {codes.map((code, idx) => (
+              <View key={idx} style={{ marginBottom: 8, flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ flex: 1 }}>
+                  <Input
+                    placeholder={`Digite o código ${idx + 1}`}
+                    value={code}
+                    onChangeText={text => {
+                      const newCodes = [...codes];
+                      newCodes[idx] = text;
+                      setCodes(newCodes);
+                    }}
+                    maxLength={20}
+                  />
+                </View>
+                {codes.length > 1 && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      const newCodes = codes.filter((_, i) => i !== idx);
+                      setCodes(newCodes);
+                    }}
+                    style={{ marginLeft: 8, padding: 8 }}
+                  >
+                    <Text style={{ color: '#ff4444', fontSize: 18, fontWeight: 'bold' }}>×</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            ))}
+            <View style={{ marginTop: 16, marginBottom: 8 }}>
+              <Button
+                title="+ Adicionar código"
+                onPress={() => setCodes([...codes, ""])}
+              />
+            </View>
           </View>
 
           <View style={stylesHome.buttonContainer}>

@@ -335,6 +335,7 @@ const generatePrintCommands = (settings: PrinterSettings, content: string): stri
       
       commands += ESC + '@'; // Inicializar impressora
       commands += ESC + 't' + String.fromCharCode(2); // Codepage 850 (Latin1)
+      commands += GS + '!' + String.fromCharCode(0x11); // Tamanho da fonte: dupla altura e largura
       commands += ESC + 'a' + String.fromCharCode(1); // Centralizar
       commands += convertedContent + '\n';
       commands += ESC + 'd' + String.fromCharCode(3); // Alimentar papel
@@ -344,7 +345,7 @@ const generatePrintCommands = (settings: PrinterSettings, content: string): stri
     case 'ZPL':
       // Comandos ZPL para impressoras Zebra
       commands += '^XA\n'; // Início do rótulo
-      commands += '^CF0,30\n'; // Fonte padrão, tamanho 30
+      commands += '^CF0,50\n'; // Fonte padrão, tamanho 50 (aumentado de 30)
       commands += '^FO50,50\n'; // Posição do campo
       commands += `^FD${convertedContent}^FS\n`; // Dados do campo
       commands += '^XZ\n'; // Fim do rótulo
@@ -353,7 +354,7 @@ const generatePrintCommands = (settings: PrinterSettings, content: string): stri
     case 'EPL':
       // Comandos EPL para impressoras Eltron
       commands += 'N\n'; // Limpar buffer
-      commands += 'A50,50,0,3,1,1,N,"' + convertedContent + '"\n'; // Texto
+      commands += 'A50,50,0,4,1,1,N,"' + convertedContent + '"\n'; // Texto com fonte tamanho 4 (aumentado de 3)
       commands += 'P1,1\n'; // Imprimir 1 cópia
       break;
       
@@ -364,6 +365,7 @@ const generatePrintCommands = (settings: PrinterSettings, content: string): stri
       
       commands += ESC_DEFAULT + '@';
       commands += ESC_DEFAULT + 't' + String.fromCharCode(2); // Codepage 850 (Latin1)
+      commands += GS_DEFAULT + '!' + String.fromCharCode(0x11); // Tamanho da fonte: dupla altura e largura
       commands += ESC_DEFAULT + 'a' + String.fromCharCode(1);
       commands += convertedContent + '\n';
       commands += ESC_DEFAULT + 'd' + String.fromCharCode(3);

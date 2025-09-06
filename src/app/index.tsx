@@ -57,10 +57,24 @@ export default function HomeScreen() {
   );
 
   const handleConfirmPrint = async () => {
-    if (!name.trim() || codes.some((c) => !c.trim())) {
+    if (!name.trim()) {
       Alert.alert(
-        "Campos obrigatórios",
-        "Por favor, preencha o nome e todos os códigos."
+        "Campo obrigatório",
+        "Por favor, preencha o nome do entregador."
+      );
+      return;
+    }
+
+    // Validar códigos: devem ter exatamente 4 dígitos
+    const invalidCodes = codes.filter(
+      (code) =>
+        !code.trim() || code.trim().length !== 4 || !/^\d{4}$/.test(code.trim())
+    );
+
+    if (invalidCodes.length > 0) {
+      Alert.alert(
+        "Códigos inválidos",
+        "Cada código deve ter exatamente 4 números (nem mais, nem menos)."
       );
       return;
     }
@@ -150,10 +164,6 @@ export default function HomeScreen() {
     }
   };
 
-  const navigateToSettings = () => {
-    router.push("./settings");
-  };
-
   return (
     <KeyboardAvoidingView
       style={stylesHome.container}
@@ -172,40 +182,44 @@ export default function HomeScreen() {
           </View>
 
           <View style={stylesHome.inputContainer}>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 8,
-              }}
-            >
-              <Text style={stylesHome.label}>Códigos do pedido IFood *</Text>
-              <View style={{ width: 40 }}>
-                <Button title="+" onPress={() => setCodes([...codes, ""])} />
-              </View>
-            </View>
+            <Text style={stylesHome.label}>Códigos do pedido IFood *</Text>
             {codes.map((code, idx) => (
               <View
                 key={idx}
                 style={{
                   marginBottom: 8,
                   flexDirection: "row",
-                  alignItems: "center",
                 }}
               >
                 <View style={{ flex: 1 }}>
                   <Input
-                    placeholder={`Digite o código ${idx + 1}`}
+                    placeholder={`Digite os 4 números IFood`}
                     value={code}
                     onChangeText={(text) => {
+                      // Validação: apenas números e máximo 4 dígitos
+                      const numericText = text.replace(/[^0-9]/g, "");
+                      const limitedText = numericText.slice(0, 4);
+
                       const newCodes = [...codes];
-                      newCodes[idx] = text;
+                      newCodes[idx] = limitedText;
                       setCodes(newCodes);
                     }}
-                    maxLength={20}
+                    maxLength={4}
+                    keyboardType="numeric"
                   />
                 </View>
+
+                {/* Botão + aparece apenas no último input */}
+                {idx === codes.length - 1 && (
+                  <View style={{ marginLeft: 12, marginTop: 0, width: 50, height: 48 }}>
+                    <Button
+                      title="+ 1"
+                      onPress={() => setCodes([...codes, ""])}
+                    />
+                  </View>
+                )}
+
+                {/* Botão X aparece em todos exceto quando há apenas 1 */}
                 {codes.length > 1 && (
                   <TouchableOpacity
                     onPress={() => {

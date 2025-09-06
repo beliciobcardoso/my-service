@@ -9,9 +9,6 @@
     "web": "expo start --web",
     "test": "jest --watchAll",
     "testNoWatch": "jest --watchAll=falseS",
-    "build:android": "eas build --platform android",
-    "build:android-apk": "eas build --platform android --profile preview",
-    "build:android-local": "expo build:android",
     "build:apk": "cd android && ./gradlew assembleRelease"
   },
   "jest": {

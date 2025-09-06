@@ -242,6 +242,35 @@ export interface SavedPrinter extends PrinterSettings {
 - Alimentação de papel: `\x1Bd\x03`
 - Corte: `\x1DV\x00`
 
+##### Comandos de Alimentação de Papel ESC/POS
+O sistema oferece múltiplos comandos para controlar a alimentação de papel:
+
+| Comando | Hex | Descrição | Parâmetro | Uso no Sistema |
+|---------|-----|-----------|-----------|----------------|
+| `ESC d n` | `\x1B\x64\xnn` | **Alimentar n linhas** | n = 1-255 linhas | ✅ **Usado** |
+| `LF` | `\x0A` | Avanço de 1 linha | - | ✅ **Usado** |
+| `ESC J n` | `\x1B\x4A\xnn` | Alimentar altura em pontos | n = altura em 1/180" | ❌ Disponível |
+| `FF` | `\x0C` | Ejetar página | - | ❌ Disponível |
+| `ESC j n` | `\x1B\x6A\xnn` | Alimentação reversa | n = linhas (se suportado) | ❌ Disponível |
+
+**Exemplos de implementação:**
+```typescript
+// Comando usado no sistema (3 linhas)
+commands += ESC + 'd' + String.fromCharCode(3); // \x1B\x64\x03
+
+// Outras opções disponíveis:
+commands += ESC + 'd' + String.fromCharCode(1); // 1 linha
+commands += ESC + 'd' + String.fromCharCode(5); // 5 linhas
+commands += '\n'; // LF - 1 linha simples
+commands += ESC + 'J' + String.fromCharCode(30); // 30 pontos (1/6")
+```
+
+**Por que usar ESC d 3?**
+- ✅ **Compatibilidade**: Funciona na maioria das impressoras ESC/POS
+- ✅ **Espaçamento adequado**: 3 linhas fornecem separação visual clara
+- ✅ **Confiabilidade**: Comando padrão e bem suportado
+- ✅ **Flexibilidade**: Fácil de ajustar alterando o parâmetro
+
 ##### Comandos de Tamanho de Fonte ESC/POS
 O sistema utiliza o comando `GS + '!' + String.fromCharCode(valor)` para controlar o tamanho da fonte:
 
@@ -277,6 +306,48 @@ commands += GS + '!' + String.fromCharCode(0x33);
 ```
 
 **Fórmula de cálculo do valor:**
+- **Largura:** `(largura - 1) << 0` (bits 0-3)
+
+##### Reset de Fonte para Compatibilidade
+Para garantir que outras aplicações não sejam afetadas pelas configurações de fonte, o sistema automaticamente executa um **reset da fonte para o padrão** ao final de cada impressão:
+
+```typescript
+// Aplicar tamanho configurado pelo usuário
+commands += GS + '!' + String.fromCharCode(settings.fontSize || 0x00);
+commands += convertedContent + '\n';
+
+// IMPORTANTE: Reset fonte para padrão ao final
+commands += GS + '!' + String.fromCharCode(0x00); // Volta para fonte normal
+```
+
+**Por que isso é necessário?**
+- Quando a impressora recebe um comando de fonte (ex: `0x11`), ela mantém essa configuração até receber um novo comando
+- Se outras aplicações imprimirem na mesma impressora, elas herdarão o último tamanho configurado
+- O reset para `0x00` garante que a impressora sempre volte ao estado padrão após cada impressão do nosso sistema
+
+##### Customização da Alimentação de Papel
+O sistema permite fácil customização da alimentação de papel alterando o parâmetro no código:
+
+```typescript
+// Localização no código: src/utils/printer.ts - função generatePrintCommands
+
+// Configuração atual (3 linhas)
+commands += ESC + 'd' + String.fromCharCode(3); // Padrão do sistema
+
+// Opções de customização:
+commands += ESC + 'd' + String.fromCharCode(1); // Mínimo - 1 linha
+commands += ESC + 'd' + String.fromCharCode(2); // Compacto - 2 linhas  
+commands += ESC + 'd' + String.fromCharCode(4); // Mais espaço - 4 linhas
+commands += ESC + 'd' + String.fromCharCode(6); // Muito espaço - 6 linhas
+```
+
+**Recomendações por tipo de uso:**
+- **Etiquetas pequenas**: 1-2 linhas (`String.fromCharCode(1-2)`)
+- **Uso geral**: 3 linhas (`String.fromCharCode(3)`) - **Atual**
+- **Separação clara**: 4-5 linhas (`String.fromCharCode(4-5)`)
+- **Modo econômico**: 1 linha + LF (`String.fromCharCode(1)` + `'\n'`)
+
+**Fórmula de cálculo da fonte:**
 - **Largura:** `(largura - 1) << 0` (bits 0-3)
 - **Altura:** `(altura - 1) << 4` (bits 4-7)
 - **Valor final:** `largura_bits | altura_bits`

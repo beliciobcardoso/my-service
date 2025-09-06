@@ -338,7 +338,8 @@ const generatePrintCommands = (settings: PrinterSettings, content: string): stri
       commands += GS + '!' + String.fromCharCode(settings.fontSize || 0x00); // Tamanho da fonte configurável
       commands += ESC + 'a' + String.fromCharCode(1); // Centralizar
       commands += convertedContent + '\n';
-      commands += ESC + 'd' + String.fromCharCode(3); // Alimentar papel
+      commands += GS + '!' + String.fromCharCode(0x00); // Reset fonte para padrão
+      commands += ESC + 'd' + String.fromCharCode(5); // Alimentar papel
       commands += GS + 'V' + String.fromCharCode(0); // Corte completo
       break;
       
@@ -368,6 +369,7 @@ const generatePrintCommands = (settings: PrinterSettings, content: string): stri
       commands += GS_DEFAULT + '!' + String.fromCharCode(settings.fontSize || 0x00); // Tamanho da fonte configurável
       commands += ESC_DEFAULT + 'a' + String.fromCharCode(1);
       commands += convertedContent + '\n';
+      commands += GS_DEFAULT + '!' + String.fromCharCode(0x00); // Reset fonte para padrão
       commands += ESC_DEFAULT + 'd' + String.fromCharCode(3);
       commands += GS_DEFAULT + 'V' + String.fromCharCode(0);
   }

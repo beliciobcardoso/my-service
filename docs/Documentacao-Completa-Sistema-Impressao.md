@@ -7,6 +7,8 @@
 
 ## 1. LEVANTAMENTO DE REQUISITOS
 
+/home/belicio-cardoso/Área de trabalho/Projetos/pessoal/my-service/android/app/build/outputs/apk/release/app-release.apk
+
 ### 1.1. Requisitos Funcionais
 - **RF01**: Permitir entrada de dados (Nome e Código) na tela principal
 - **RF02**: Configurar impressora via IP, porta e padrão de impressão

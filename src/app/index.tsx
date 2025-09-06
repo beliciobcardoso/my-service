@@ -57,7 +57,7 @@ export default function HomeScreen() {
   );
 
   const handleConfirmPrint = async () => {
-    if (!name.trim() || codes.some(c => !c.trim())) {
+    if (!name.trim() || codes.some((c) => !c.trim())) {
       Alert.alert(
         "Campos obrigatórios",
         "Por favor, preencha o nome e todos os códigos."
@@ -98,7 +98,7 @@ export default function HomeScreen() {
     setIsLoading(true);
 
     try {
-  const printContent = `
+      const printContent = `
   ENTREGADOR
   ========================
   Nome: ${name.trim()}
@@ -110,39 +110,41 @@ export default function HomeScreen() {
 `;
 
       // Definir nome da impressora (usar o nome salvo ou gerar um baseado no IP)
-      const printerName = selectedPrinter?.name || `Impressora ${currentSettings.ipAddress}`;
+      const printerName =
+        selectedPrinter?.name || `Impressora ${currentSettings.ipAddress}`;
       const printerId = selectedPrinter?.id;
 
       const result = await printData(
-        printContent, 
-        currentSettings, 
+        printContent,
+        currentSettings,
         printerId,
         printerName,
-  { nome: name.trim(), codigo: codes.map(c => c.trim()).join(", ") }
+        { nome: name.trim(), codigo: codes.map((c) => c.trim()).join(", ") }
       );
 
       console.log("Resultado da impressão:", result);
 
-      Alert.alert(result.success ? "Sucesso" : `Erro: ${result.message}`, result.details,  [
+      Alert.alert(
+        result.success ? "Sucesso" : `Erro: ${result.message}`,
+        result.details,
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              setName("");
+              setCodes([""]);
+            },
+          },
+        ],
         {
-          text: "OK",
-          onPress: () => {
+          onDismiss: () => {
             setName("");
             setCodes([""]);
           },
-        },
-      ],
-    {
-      onDismiss: () => {
-  setName("");
-  setCodes([""]);
-      },
-    });
-    } catch (error: any) {
-      Alert.alert(
-        "Erro na impressão",
-        error.message || "Falha ao imprimir."
+        }
       );
+    } catch (error: any) {
+      Alert.alert("Erro na impressão", error.message || "Falha ao imprimir.");
     } finally {
       setIsLoading(false);
     }
@@ -170,14 +172,33 @@ export default function HomeScreen() {
           </View>
 
           <View style={stylesHome.inputContainer}>
-            <Text style={stylesHome.label}>Códigos do pedido IFood *</Text>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 8,
+              }}
+            >
+              <Text style={stylesHome.label}>Códigos do pedido IFood *</Text>
+              <View style={{ width: 40 }}>
+                <Button title="+" onPress={() => setCodes([...codes, ""])} />
+              </View>
+            </View>
             {codes.map((code, idx) => (
-              <View key={idx} style={{ marginBottom: 8, flexDirection: 'row', alignItems: 'center' }}>
+              <View
+                key={idx}
+                style={{
+                  marginBottom: 8,
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+              >
                 <View style={{ flex: 1 }}>
                   <Input
                     placeholder={`Digite o código ${idx + 1}`}
                     value={code}
-                    onChangeText={text => {
+                    onChangeText={(text) => {
                       const newCodes = [...codes];
                       newCodes[idx] = text;
                       setCodes(newCodes);
@@ -193,17 +214,19 @@ export default function HomeScreen() {
                     }}
                     style={{ marginLeft: 8, padding: 8 }}
                   >
-                    <Text style={{ color: '#ff4444', fontSize: 18, fontWeight: 'bold' }}>×</Text>
+                    <Text
+                      style={{
+                        color: "#ff4444",
+                        fontSize: 18,
+                        fontWeight: "bold",
+                      }}
+                    >
+                      ×
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>
             ))}
-            <View style={{ marginTop: 16, marginBottom: 8 }}>
-              <Button
-                title="+ Adicionar código"
-                onPress={() => setCodes([...codes, ""])}
-              />
-            </View>
           </View>
 
           <View style={stylesHome.buttonContainer}>

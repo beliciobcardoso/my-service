@@ -101,7 +101,7 @@ export default function HomeScreen() {
       ENTREGADOR
       ========================
       Nome: ${name.trim()}
-      Código: ${code.trim()}
+      Codigo: ${code.trim()}
       ------------------------
       Data: ${new Date().toLocaleDateString()}
       Hora: ${new Date().toLocaleTimeString()}
@@ -159,9 +159,9 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={stylesHome.scrollContent}>
         <View style={stylesHome.formContainer}>
           <View style={stylesHome.inputContainer}>
-            <Text style={stylesHome.label}>Nome *</Text>
+            <Text style={stylesHome.label}>Nome do Entregador *</Text>
             <Input
-              placeholder="Digite o nome"
+              placeholder="Digite o nome do entregador"
               value={name}
               onChangeText={setName}
               maxLength={50}
@@ -169,9 +169,9 @@ export default function HomeScreen() {
           </View>
 
           <View style={stylesHome.inputContainer}>
-            <Text style={stylesHome.label}>Código *</Text>
+            <Text style={stylesHome.label}>Código do pedido IFood *</Text>
             <Input
-              placeholder="Digite o código"
+              placeholder="Digite o código do pedido IFood"
               value={code}
               onChangeText={setCode}
               maxLength={20}

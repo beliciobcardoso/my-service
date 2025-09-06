@@ -231,7 +231,7 @@ export default function SettingsScreen() {
               placeholder="Ex: 192.168.1.100"
               value={ipAddress}
               onChangeText={setIpAddress}
-              keyboardType="numeric"
+              keyboardType="default"
               maxLength={15}
             />
             <Text style={styles.helpText}>
